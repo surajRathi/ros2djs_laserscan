@@ -17,36 +17,12 @@ ros.on('close', function () {
     console.log('Connection to websocket server closed.');
 });
 
-// Publishing a Topic
-// ------------------
-
-const cmdVel = new ROSLIB.Topic({
-    ros: ros,
-    name: '/cmd_vel',
-    messageType: 'geometry_msgs/Twist'
-});
-
-const twist = new ROSLIB.Message({
-    linear: {
-        x: 0.1,
-        y: 0.2,
-        z: 0.3
-    },
-    angular: {
-        x: -0.1,
-        y: -0.2,
-        z: -0.3
-    }
-});
-cmdVel.publish(twist);
 
 // Subscribing to a Topic
 // ----------------------
 
 const listener = new ROSLIB.Topic({
-    ros: ros,
-    name: '/listener',
-    messageType: 'std_msgs/String'
+    ros: ros, name: '/beat', messageType: 'std_msgs/String'
 });
 
 listener.subscribe(function (message) {
@@ -54,40 +30,22 @@ listener.subscribe(function (message) {
     listener.unsubscribe();
 });
 
-// Calling a service
-// -----------------
+function init_nav2djs() {
+    // Create the main viewer.
+    const viewer = new ROS2D.Viewer({
+        divID: 'nav', width: 750, height: 800
+    });
 
-const addTwoIntsClient = new ROSLIB.Service({
-    ros: ros,
-    name: '/add_two_ints',
-    serviceType: 'rospy_tutorials/AddTwoInts'
-});
+    // Setup the map client.
+    var gridClient = new ROS2D.OccupancyGridClient({
+        ros: ros, rootObject: viewer.scene
+    });
 
-const request = new ROSLIB.ServiceRequest({
-    a: 1,
-    b: 2
-});
+    // Scale the canvas to fit to the map
+    gridClient.on('change', function () {
+        viewer.scaleToDimensions(gridClient.currentGrid.width, gridClient.currentGrid.height);
+    });
 
-addTwoIntsClient.callService(request, function (result) {
-    console.log('Result for service call on '
-        + addTwoIntsClient.name
-        + ': '
-        + result.sum);
-});
+}
 
-// Getting and setting a param value
-// ---------------------------------
-
-ros.getParams(function (params) {
-    console.log(params);
-});
-
-const maxVelX = new ROSLIB.Param({
-    ros: ros,
-    name: 'max_vel_y'
-});
-
-maxVelX.set(0.8);
-maxVelX.get(function (value) {
-    console.log('MAX VAL: ' + value);
-});
+document.addEventListener('DOMContentLoaded', init_nav2djs, false);
