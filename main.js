@@ -1,7 +1,7 @@
 // Connecting to ROS
 // -----------------
 
-var ros = new ROSLIB.Ros({
+const ros = new ROSLIB.Ros({
     url: 'ws://localhost:9090'
 });
 
@@ -20,13 +20,13 @@ ros.on('close', function () {
 // Publishing a Topic
 // ------------------
 
-var cmdVel = new ROSLIB.Topic({
+const cmdVel = new ROSLIB.Topic({
     ros: ros,
     name: '/cmd_vel',
     messageType: 'geometry_msgs/Twist'
 });
 
-var twist = new ROSLIB.Message({
+const twist = new ROSLIB.Message({
     linear: {
         x: 0.1,
         y: 0.2,
@@ -43,7 +43,7 @@ cmdVel.publish(twist);
 // Subscribing to a Topic
 // ----------------------
 
-var listener = new ROSLIB.Topic({
+const listener = new ROSLIB.Topic({
     ros: ros,
     name: '/listener',
     messageType: 'std_msgs/String'
@@ -57,13 +57,13 @@ listener.subscribe(function (message) {
 // Calling a service
 // -----------------
 
-var addTwoIntsClient = new ROSLIB.Service({
+const addTwoIntsClient = new ROSLIB.Service({
     ros: ros,
     name: '/add_two_ints',
     serviceType: 'rospy_tutorials/AddTwoInts'
 });
 
-var request = new ROSLIB.ServiceRequest({
+const request = new ROSLIB.ServiceRequest({
     a: 1,
     b: 2
 });
@@ -82,7 +82,7 @@ ros.getParams(function (params) {
     console.log(params);
 });
 
-var maxVelX = new ROSLIB.Param({
+const maxVelX = new ROSLIB.Param({
     ros: ros,
     name: 'max_vel_y'
 });
