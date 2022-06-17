@@ -34,14 +34,14 @@ class App {
         this.zoom_view.startZoom(this.width / 2, this.height / 2)
     }
 
-    on_wheel(ev) {
+    on_wheel_rotate(ev) {
         this.scale_factor -= ev.deltaY / 1000
         this.scale_factor = this.scale_factor <= 0 ? this.zoom_view.minScale : this.scale_factor
         this.zoom_view.zoom(this.scale_factor)
         // console.log(this.scale_factor) // , this.viewer.scene.scaleX * this.scale_factor, this.viewer.scene.scaleY * this.scale_factor)
     }
 
-    move_listener(e) {
+    on_mouse_move(e) {
         if (e.buttons === 1) {
             // console.log(e.movementX, e.movementY)
             this.init_zoom()
@@ -53,9 +53,10 @@ class App {
         this.viewer.scaleToDimensions(this.gridClient.currentGrid.width, this.gridClient.currentGrid.height);
     }
 
-    init_nav2djs() {
+    init() {
 
         this.div_el = document.getElementById(this.div_el_id)
+
         // Create the main viewer.
         this.viewer = new ROS2D.Viewer({
             divID: this.div_el_id, width: this.width, height: this.height
@@ -68,8 +69,9 @@ class App {
         // Dunno why this is required
         setTimeout(this.init_zoom.bind(this), 1000)
 
-        this.div_el.addEventListener("wheel", this.on_wheel.bind(this));
-        this.div_el.addEventListener('mousemove', this.move_listener.bind(this))
+        // Setup zoom and pan
+        this.div_el.addEventListener("wheel", this.on_wheel_rotate.bind(this));
+        this.div_el.addEventListener('mousemove', this.on_mouse_move.bind(this))
 
         // Set up the map client.
         this.gridClient = new ROS2D.OccupancyGridClient({
@@ -95,4 +97,4 @@ listener.subscribe(function (message) {
 });
 
 
-document.addEventListener('DOMContentLoaded', app.init_nav2djs.bind(app), false);
+document.addEventListener('DOMContentLoaded', app.init.bind(app), false);
