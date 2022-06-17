@@ -93,8 +93,12 @@ listener.subscribe(function (msg) {
     });
     // console.log(pts)
 
+    // the library has a bug where fillColor and pointColor are the same, and taken from pointColor
     const marker = new ROS2D.PolygonMarker({
-        lineSize: 0.1, pointSize: 0.1, fillColor: createjs.Graphics.getRGB(0, 0, 0, 0.1)
+        lineSize: 0.1,
+        pointSize: 0.1,
+        pointColor: createjs.Graphics.getRGB(0, 0, 0, 0.1),
+        lineColor: createjs.Graphics.getRGB(255, 0, 0, 1.0)
     })
     app.viewer.addObject(marker)
 
