@@ -30,28 +30,6 @@ class App {
     viewer
     zoom_view
 
-    init_zoom() {
-        this.zoom_view.startZoom(this.width / 2, this.height / 2)
-    }
-
-    on_wheel_rotate(ev) {
-        this.scale_factor -= ev.deltaY / 1000
-        this.scale_factor = this.scale_factor <= 0 ? this.zoom_view.minScale : this.scale_factor
-        this.zoom_view.zoom(this.scale_factor)
-        // console.log(this.scale_factor) // , this.viewer.scene.scaleX * this.scale_factor, this.viewer.scene.scaleY * this.scale_factor)
-    }
-
-    on_mouse_move(e) {
-        if (e.buttons === 1) {
-            // console.log(e.movementX, e.movementY)
-            this.init_zoom()
-            this.viewer.shift(-e.movementX / this.viewer.scene.scaleX, e.movementY / this.viewer.scene.scaleY)
-        }
-    }
-
-    on_canvas_change() {
-        this.viewer.scaleToDimensions(this.gridClient.currentGrid.width, this.gridClient.currentGrid.height);
-    }
 
     init() {
 
@@ -67,11 +45,21 @@ class App {
         })
         this.zoom_view.startZoom(this.width / 2, this.height / 2)
         // Dunno why this is required
-        setTimeout(this.init_zoom.bind(this), 1000)
+        setTimeout(() => this.zoom_view.startZoom(this.width / 2, this.height / 2), 1000)
 
         // Setup zoom and pan
-        this.div_el.addEventListener("wheel", this.on_wheel_rotate.bind(this));
-        this.div_el.addEventListener('mousemove', this.on_mouse_move.bind(this))
+        this.div_el.addEventListener("wheel", (ev) => {
+            this.scale_factor -= ev.deltaY / 1000
+            this.scale_factor = this.scale_factor <= 0 ? this.zoom_view.minScale : this.scale_factor
+            this.zoom_view.zoom(this.scale_factor)
+        });
+        this.div_el.addEventListener('mousemove', (e) => {
+            if (e.buttons === 1) {
+                // The y-axis is flipped in ROS
+                this.viewer.shift(-e.movementX / this.viewer.scene.scaleX, e.movementY / this.viewer.scene.scaleY)
+                this.zoom_view.startZoom(this.width / 2, this.height / 2)
+            }
+        })
 
         // Set up the map client.
         this.gridClient = new ROS2D.OccupancyGridClient({
@@ -79,7 +67,7 @@ class App {
         });
 
         // Scale the canvas to fit to the map
-        this.gridClient.on('change', this.on_canvas_change.bind(this));
+        this.gridClient.on('change', () => this.viewer.scaleToDimensions(this.gridClient.currentGrid.width, this.gridClient.currentGrid.height));
     }
 }
 
