@@ -79,8 +79,34 @@ const listener = new ROSLIB.Topic({
     ros: ros, name: '/scan', messageType: 'sensor_msgs/LaserScan'
 });
 
-listener.subscribe(function (message) {
-    console.log('Received message on ' + listener.name + ': ' + message.header.frame_id);
+listener.subscribe(function (msg) {
+    console.log('Received message on ' + listener.name + ': ' + msg.header.frame_id);
+    console.log(msg)
+    const num = msg.ranges.length
+    const angles = Array.from({length: num}, (_, i) => msg.angle_min + (msg.angle_max - msg.angle_min) / num * i)
+    const pts = angles.flatMap((angle, index) => {
+        const range = msg.ranges[index];
+        if (range > msg.range_min && range < msg.range_max) {
+            // console.log(Math.cos(angle) * range, Math.sin(angle) * range)
+            return [[Math.cos(angle) * range, Math.sin(angle) * range]]
+        }
+    });
+    // console.log(pts)
+
+    const marker = new ROS2D.PolygonMarker({
+        lineSize: 0.1, pointSize: 0.1, fillColor: createjs.Graphics.getRGB(0, 0, 0, 0.1)
+    })
+    app.viewer.addObject(marker)
+
+    pts.forEach(pt => {
+        marker.addPoint(new ROSLIB.Vector3({
+            x: pt[0], y: pt[1], z: 0
+        }))
+    })
+    // console.log(marker)
+    // 1. Find the points in the laser scan
+    // 2. Convert them to ground frame
+    // 3. Display them
     listener.unsubscribe();
 });
 
