@@ -38,7 +38,7 @@ class App {
     init() {
 
         this.tf_client = new ROSLIB.TFClient({
-            ros: ros, fixedFrame: this.ground_frame, angularThres: 0.0, transThres: 0.0
+            ros: ros, fixedFrame: this.ground_frame, angularThres: 0.01, transThres: 0.01
             // ros: ros, fixedFrame: this.ground_frame, angularThres: 0.01, transThres: 0.01
         })
 
@@ -86,33 +86,26 @@ class App {
 const app = new App();
 // Subscribing to a Topic
 // ----------------------
-let scan_marker = null
+let scan_marker = null;
 const listener = new ROSLIB.Topic({
     ros: ros, name: '/scan', messageType: 'sensor_msgs/LaserScan'
 });
 
 listener.subscribe(function (msg) {
-    console.log('Received message on ' + listener.name + ': ' + msg.header.frame_id);
-    console.log(msg)
     const num = msg.ranges.length
     const angles = Array.from({length: num}, (_, i) => msg.angle_min + (msg.angle_max - msg.angle_min) / num * i)
     const pts = angles.flatMap((angle, index) => {
         const range = msg.ranges[index];
         if (range > msg.range_min && range < msg.range_max) {
             // console.log(Math.cos(angle) * range, Math.sin(angle) * range)
-            return [[Math.cos(angle) * range, Math.sin(angle) * range]]
+            return [[Math.cos(angle) * range, Math.sin(angle) * range, -angle]]
         }
         return []
     });
     // console.log(pts)
 
     // the library has a bug where fillColor and pointColor are the same, and taken from pointColor
-    const marker = new ROS2D.PolygonMarker({
-        lineSize: 0.1,
-        pointSize: 0.1,
-        pointColor: createjs.Graphics.getRGB(0, 0, 0, 0.1),
-        lineColor: createjs.Graphics.getRGB(255, 0, 0, 1.0)
-    })
+    const marker = new createjs.Container();
 
     if (app.base_footprint_tf === null) {
         console.log('no tf');
@@ -124,10 +117,29 @@ listener.subscribe(function (msg) {
         const p_p = new ROSLIB.Pose({
             position: new ROSLIB.Vector3({
                 x: pt[0], y: pt[1], z: 0
+            }), orientation: new ROSLIB.Quaternion({
+                x: 0, y: 0, z: Math.cos(pt[2]), w: Math.sin(pt[2])
+
             })
         })
         p_p.applyTransform(app.base_footprint_tf)
-        marker.addPoint(p_p.position)
+
+        const goalMarker = new ROS2D.NavigationArrow({
+            size: 0,
+            strokeSize: 5,
+            strokeColor: createjs.Graphics.getRGB(255, 0, 0, 0.5),
+            fillColor: createjs.Graphics.getRGB(255, 0, 0, 0.5),
+            pulse: false,
+
+        });
+        goalMarker.x = p_p.position.x;
+        goalMarker.y = -p_p.position.y;
+        goalMarker.rotation = app.viewer.scene.rosQuaternionToGlobalTheta(p_p.orientation);
+        goalMarker.scaleX = 1.0 / app.viewer.scene.scaleX;
+        goalMarker.scaleY = 1.0 / app.viewer.scene.scaleY;
+
+
+        marker.addChild(goalMarker)
     })
 
     // 2. Convert them to ground frame
