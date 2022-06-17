@@ -19,7 +19,7 @@ ros.on('close', function () {
 
 
 class App {
-    width = 1200
+    width = 1000
     height = 500
     scale_factor = 1.0
 
@@ -28,13 +28,25 @@ class App {
     div_el
     gridClient
     viewer
+    zoom_view
+
+    init_zoom() {
+        this.zoom_view.startZoom(this.width / 2, this.height / 2)
+    }
 
     on_wheel(ev) {
-        this.scale_factor += ev.deltaY / 1000
-        this.scale_factor = this.scale_factor <= 0 ? 0.1 : this.scale_factor
+        this.scale_factor -= ev.deltaY / 1000
+        this.scale_factor = this.scale_factor <= 0 ? this.zoom_view.minScale : this.scale_factor
+        this.zoom_view.zoom(this.scale_factor)
+        // console.log(this.scale_factor) // , this.viewer.scene.scaleX * this.scale_factor, this.viewer.scene.scaleY * this.scale_factor)
+    }
 
-        this.viewer.scaleToDimensions(Math.floor(this.width * this.scale_factor), Math.floor(this.height * this.scale_factor))
-        console.log(this.scale_factor, Math.floor(this.width * this.scale_factor), Math.floor(this.height * this.scale_factor))
+    move_listener(e) {
+        if (e.buttons === 1) {
+            // console.log(e.movementX, e.movementY)
+            this.init_zoom()
+            this.viewer.shift(-e.movementX / this.viewer.scene.scaleX, e.movementY / this.viewer.scene.scaleY)
+        }
     }
 
     on_canvas_change() {
@@ -49,7 +61,15 @@ class App {
             divID: this.div_el_id, width: this.width, height: this.height
         });
 
+        this.zoom_view = new ROS2D.ZoomView({
+            rootObject: this.viewer.scene
+        })
+        this.zoom_view.startZoom(this.width / 2, this.height / 2)
+        // Dunno why this is required
+        setTimeout(this.init_zoom.bind(this), 1000)
+
         this.div_el.addEventListener("wheel", this.on_wheel.bind(this));
+        this.div_el.addEventListener('mousemove', this.move_listener.bind(this))
 
         // Set up the map client.
         this.gridClient = new ROS2D.OccupancyGridClient({
