@@ -18,34 +18,61 @@ ros.on('close', function () {
 });
 
 
+class App {
+    width = 1200
+    height = 500
+    scale_factor = 1.0
+
+    div_el_id = 'nav'
+
+    div_el
+    gridClient
+    viewer
+
+    on_wheel(ev) {
+        this.scale_factor += ev.deltaY / 1000
+        this.scale_factor = this.scale_factor <= 0 ? 0.1 : this.scale_factor
+
+        this.viewer.scaleToDimensions(Math.floor(this.width * this.scale_factor), Math.floor(this.height * this.scale_factor))
+        console.log(this.scale_factor, Math.floor(this.width * this.scale_factor), Math.floor(this.height * this.scale_factor))
+    }
+
+    on_canvas_change() {
+        this.viewer.scaleToDimensions(this.gridClient.currentGrid.width, this.gridClient.currentGrid.height);
+    }
+
+    init_nav2djs() {
+
+        this.div_el = document.getElementById(this.div_el_id)
+        // Create the main viewer.
+        this.viewer = new ROS2D.Viewer({
+            divID: this.div_el_id, width: this.width, height: this.height
+        });
+
+        this.div_el.addEventListener("wheel", this.on_wheel.bind(this));
+
+        // Set up the map client.
+        this.gridClient = new ROS2D.OccupancyGridClient({
+            ros: ros, rootObject: this.viewer.scene
+        });
+
+        // Scale the canvas to fit to the map
+        this.gridClient.on('change', this.on_canvas_change.bind(this));
+    }
+}
+
+const app = new App();
 // Subscribing to a Topic
 // ----------------------
 
 const listener = new ROSLIB.Topic({
-    ros: ros, name: '/beat', messageType: 'std_msgs/String'
+    ros: ros, name: '/scan', messageType: 'sensor_msgs/LaserScan'
 });
 
 listener.subscribe(function (message) {
-    console.log('Received message on ' + listener.name + ': ' + message.data);
+    console.log('Received message on ' + listener.name + ': ' + message.header.frame_id);
     listener.unsubscribe();
 });
 
-function init_nav2djs() {
-    // Create the main viewer.
-    const viewer = new ROS2D.Viewer({
-        divID: 'nav', width: 750, height: 800
-    });
 
-    // Setup the map client.
-    var gridClient = new ROS2D.OccupancyGridClient({
-        ros: ros, rootObject: viewer.scene
-    });
-
-    // Scale the canvas to fit to the map
-    gridClient.on('change', function () {
-        viewer.scaleToDimensions(gridClient.currentGrid.width, gridClient.currentGrid.height);
-    });
-
-}
-
-document.addEventListener('DOMContentLoaded', init_nav2djs, false);
+document.addEventListener('DOMContentLoaded', app.init_nav2djs.bind(app), false);
