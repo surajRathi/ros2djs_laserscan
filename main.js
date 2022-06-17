@@ -20,8 +20,8 @@ ros.on('close', function () {
 
 class App {
     ground_frame = "map"
-    width = 1000
-    height = 500
+    width = 720
+    height = 655
     scale_factor = 1.0
 
     div_el_id = 'nav'
