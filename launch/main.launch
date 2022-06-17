@@ -1,5 +1,24 @@
 <launch>
-  <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
-     <arg name="port" value="9090"/>
-  </include>
+    <!--
+    roscore
+    roslaunch rosbridge_server rosbridge_websocket.launch
+    rosrun tf2_web_republisher tf2_web_republisher
+    rosrun map_server map_server ./aa/rail_lab_no_furniture.yaml
+    ./fake_obs.py
+    rosrun tf2_ros static_transform_publisher 3 0 0 0 0 0 map base_footprint
+    -->
+    <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
+        <arg name="port" value="9090"/>
+    </include>
+
+    <node pkg="tf2_web_republisher" type="tf2_web_republisher" name="tf2_web_republisher"/>
+
+    <node pkg="map_server" type="map_server" name="map_server"
+          args="$(find web_laser_disp)/data/rail_lab_no_furniture.yaml"/>
+
+
+    <node pkg="web_laser_disp" type="fake_obs.py" name="fake_obs"/>
+
+    <node pkg="tf2_ros" type="static_transform_publisher" name="map_to_footprint_tf"
+          args="3 0 0 0 0 0 map base_footprint"/>
 </launch>
