@@ -19,6 +19,7 @@ ros.on('close', function () {
 
 
 class App {
+    ground_frame = "map"
     width = 1000
     height = 500
     scale_factor = 1.0
@@ -30,8 +31,18 @@ class App {
     viewer
     zoom_view
 
+    tf_client
+    base_footprint_tf = null
+
 
     init() {
+
+        this.tf_client = new ROSLIB.TFClient({
+            ros: ros, fixedFrame: this.ground_frame, angularThres: 0.0, transThres: 0.0
+            // ros: ros, fixedFrame: this.ground_frame, angularThres: 0.01, transThres: 0.01
+        })
+
+        this.tf_client.subscribe('/base_footprint', transform => this.base_footprint_tf = transform)
 
         this.div_el = document.getElementById(this.div_el_id)
 
@@ -103,22 +114,29 @@ listener.subscribe(function (msg) {
         lineColor: createjs.Graphics.getRGB(255, 0, 0, 1.0)
     })
 
+    if (app.base_footprint_tf === null) {
+        console.log('no tf');
+        return;
+    }
+    // console.log('using tf')
+
     pts.forEach(pt => {
-        marker.addPoint(new ROSLIB.Vector3({
-            x: pt[0], y: pt[1], z: 0
-        }))
+        const p_p = new ROSLIB.Pose({
+            position: new ROSLIB.Vector3({
+                x: pt[0], y: pt[1], z: 0
+            })
+        })
+        p_p.applyTransform(app.base_footprint_tf)
+        marker.addPoint(p_p.position)
     })
+
+    // 2. Convert them to ground frame
+
     // TODO: Just update the old one, dont make new ones everytime
     if (scan_marker !== null) app.viewer.scene.removeChild(scan_marker)
 
     app.viewer.addObject(marker)
     scan_marker = marker
-
-    // console.log(marker)
-    // 1. Find the points in the laser scan
-    // 2. Convert them to ground frame
-    // 3. Display them
-    // listener.unsubscribe();
 });
 
 

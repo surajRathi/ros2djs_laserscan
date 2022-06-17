@@ -2,6 +2,9 @@
 
 The `nav2djs` is ancient, will be switching to the latest `ros2djs` and drop `nav2djs`.
 
+Deps:
+`rosbridge_server`, `tf2_web_republisher`
+
 ### Deprecated
 
 The cdn for `ros2djs` and `nav2djs` don't work. We will need to build them ourselves.
