@@ -90,6 +90,7 @@ listener.subscribe(function (msg) {
             // console.log(Math.cos(angle) * range, Math.sin(angle) * range)
             return [[Math.cos(angle) * range, Math.sin(angle) * range]]
         }
+        return []
     });
     // console.log(pts)
 
