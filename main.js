@@ -48,6 +48,7 @@ class App {
         setTimeout(() => this.zoom_view.startZoom(this.width / 2, this.height / 2), 1000)
 
         // Setup zoom and pan
+        // TODO: Use PanView
         this.div_el.addEventListener("wheel", (ev) => {
             this.scale_factor -= ev.deltaY / 1000
             this.scale_factor = this.scale_factor <= 0 ? this.zoom_view.minScale : this.scale_factor
@@ -74,7 +75,7 @@ class App {
 const app = new App();
 // Subscribing to a Topic
 // ----------------------
-
+let scan_marker = null
 const listener = new ROSLIB.Topic({
     ros: ros, name: '/scan', messageType: 'sensor_msgs/LaserScan'
 });
@@ -101,18 +102,23 @@ listener.subscribe(function (msg) {
         pointColor: createjs.Graphics.getRGB(0, 0, 0, 0.1),
         lineColor: createjs.Graphics.getRGB(255, 0, 0, 1.0)
     })
-    app.viewer.addObject(marker)
 
     pts.forEach(pt => {
         marker.addPoint(new ROSLIB.Vector3({
             x: pt[0], y: pt[1], z: 0
         }))
     })
+    // TODO: Just update the old one, dont make new ones everytime
+    if (scan_marker !== null) app.viewer.scene.removeChild(scan_marker)
+
+    app.viewer.addObject(marker)
+    scan_marker = marker
+
     // console.log(marker)
     // 1. Find the points in the laser scan
     // 2. Convert them to ground frame
     // 3. Display them
-    listener.unsubscribe();
+    // listener.unsubscribe();
 });
 
 
