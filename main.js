@@ -87,7 +87,7 @@ class LaserScanRenderer {
     marker_fill_color
 
     listener
-    prev_scan_markers
+    prev_markers
 
     constructor(options) {
         options = options || {}
@@ -101,7 +101,7 @@ class LaserScanRenderer {
             ros: this.app.ros, name: this.topic, messageType: 'sensor_msgs/LaserScan'
         });
 
-        this.prev_scan_markers = null
+        this.prev_markers = null
 
         this.listener.subscribe(this.callback.bind(this));
 
@@ -163,10 +163,10 @@ class LaserScanRenderer {
         })
 
         // TODO: Just update the old one, dont make new ones everytime
-        if (this.prev_scan_markers !== null) this.app.viewer.scene.removeChild(this.prev_scan_markers)
+        if (this.prev_markers !== null) this.app.viewer.scene.removeChild(this.prev_markers)
 
         this.app.viewer.addObject(scan_markers)
-        this.prev_scan_markers = scan_markers
+        this.prev_markers = scan_markers
     }
 
 }
@@ -174,6 +174,7 @@ class LaserScanRenderer {
 const app = new App(ros);
 
 const laser_scan = new LaserScanRenderer({app: app, topic: "/scan"})
+
 
 
 document.addEventListener('DOMContentLoaded', app.init.bind(app), false);
