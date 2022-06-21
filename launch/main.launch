@@ -13,12 +13,19 @@
 
     <node pkg="tf2_web_republisher" type="tf2_web_republisher" name="tf2_web_republisher"/>
 
-    <node pkg="map_server" type="map_server" name="map_server"
-          args="$(find web_laser_disp)/data/rail_lab_no_furniture.yaml"/>
+    <!--<node pkg="map_server" type="map_server" name="map_server"
+          args="$(find web_laser_disp)/data/rail_lab_no_furniture.yaml"/>-->
 
 
-    <node pkg="web_laser_disp" type="fake_obs.py" name="fake_obs"/>
+    <!--<node pkg="web_laser_disp" type="fake_obs.py" name="fake_obs"/>-->
 
-    <node pkg="tf2_ros" type="static_transform_publisher" name="map_to_footprint_tf"
-          args="3 0 0 0 0 0 map base_footprint"/>
+    <node pkg="tf2_ros" type="static_transform_publisher" name="laser_tf"
+          args="0 0 0 0 0 0 base_link laser"/>
+
+    <node pkg="tf2_ros" type="static_transform_publisher" name="map_to_odom_tf"
+          args="0 0 0 0 0 0 map odom"/>
+    <node pkg="tf2_ros" type="static_transform_publisher" name="odom_tf"
+          args="0 0 0 0 0 0 odom base_link"/>
+    <!--<node pkg="tf2_ros" type="static_transform_publisher" name="odom_to_laser_tf"
+                                                  args="0 0 0 0 0 0 odom laser"/>-->
 </launch>
