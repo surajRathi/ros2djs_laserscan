@@ -171,10 +171,89 @@ class LaserScanRenderer {
 
 }
 
+class PathRenderer {
+    app
+    topic
+
+    marker_radius
+    marker_stroke_color
+    marker_fill_color
+
+    marker_min_dist
+
+    listener
+    prev_markers
+
+    constructor(options) {
+        options = options || {}
+        this.app = options.app
+        this.topic = options.topic || "/move_base/NavfnROS/plan"
+        this.marker_radius = options.marker_radius || 4
+        this.marker_min_dist = options.marker_min_dist || 0.5
+        this.marker_stroke_color = options.marker_stroke_color || createjs.Graphics.getRGB(0, 0, 255, 0.5)
+        this.marker_fill_color = options.marker_fill_color || createjs.Graphics.getRGB(0, 0, 255, 1.0)
+
+        this.listener = new ROSLIB.Topic({
+            ros: this.app.ros, name: this.topic, messageType: 'nav_msgs/Path'
+        });
+
+        this.prev_markers = null
+
+        this.listener.subscribe(this.callback.bind(this));
+
+    }
+
+    callback(msg) {
+
+        console.log(msg.poses.length)
+        // console.log(msg)
+        // Init the graphics component
+        const path_markers = new createjs.Container();
+
+        const graphics = new createjs.Graphics();
+        graphics.beginStroke(this.marker_stroke_color);
+        graphics.beginFill(this.marker_fill_color);
+        graphics.drawCircle(0, 0, this.marker_radius)
+        graphics.endFill();
+        graphics.endStroke();
+
+        let prev_pose = null;
+        // Transform each point and add it to the graphics
+        msg.poses.forEach(pose => {
+            if (prev_pose !== null) {
+                const distsq = Math.pow(pose.pose.position.x - prev_pose.pose.position.x, 2) + Math.pow(pose.pose.position.y - prev_pose.pose.position.y, 2) + Math.pow(pose.pose.position.z - prev_pose.pose.position.z, 2)
+                if (distsq < this.marker_min_dist * this.marker_min_dist) {
+                    return
+                }
+            }
+            console.log("passed check")
+
+            prev_pose = pose
+            const marker = new createjs.Shape(graphics)
+            marker.x = pose.pose.position.x;
+            marker.y = -pose.pose.position.y;
+            marker.rotation = this.app.viewer.scene.rosQuaternionToGlobalTheta(pose.pose.orientation);
+            marker.scaleX = 1.0 / this.app.viewer.scene.scaleX;
+            marker.scaleY = 1.0 / this.app.viewer.scene.scaleY;
+
+            path_markers.addChild(marker)
+            console.log("done 1")
+
+        })
+
+        // TODO: Just update the old one, dont make new ones everytime
+        if (this.prev_markers !== null) this.app.viewer.scene.removeChild(this.prev_markers)
+
+        this.app.viewer.addObject(path_markers)
+        this.prev_markers = path_markers
+    }
+
+}
+
 const app = new App(ros);
 
 const laser_scan = new LaserScanRenderer({app: app, topic: "/scan"})
-
+const global_path = new PathRenderer({app: app})
 
 
 document.addEventListener('DOMContentLoaded', app.init.bind(app), false);
