@@ -10,8 +10,8 @@ ros.on('close', () => console.log('Connection to websocket server closed.'));
 
 
 class App {
+    ros
     ground_frame = "map"
-    base_frame = null
     width = 720
     height = 655
     scale_factor = 1.0
@@ -26,10 +26,14 @@ class App {
     zoom_view
     map_client
 
+    constructor(ros) {
+        this.ros = ros
+    }
+
     init() {
         // Initialize TF
         this.tf_client = new ROSLIB.TFClient({
-            ros: ros, fixedFrame: this.ground_frame, angularThres: 0.01, transThres: 0.01
+            ros: this.ros, fixedFrame: this.ground_frame, angularThres: 0.01, transThres: 0.01
         })
         this.tf_client.subscribe('/base_footprint', transform => this.base_footprint_tf = transform)
 
@@ -65,7 +69,7 @@ class App {
 
         // Set up the map client.
         this.map_client = new ROS2D.OccupancyGridClient({
-            ros: ros, rootObject: this.viewer.scene
+            ros: this.ros, rootObject: this.viewer.scene
         });
 
         // Scale the canvas to fit to the map
@@ -73,79 +77,103 @@ class App {
     }
 }
 
-const app = new App();
 
+class LaserScanRenderer {
+    app
+    topic
 
-// Laser Scan Display Parameters
-const SCAN_MARKER_RADIUS = 4
-const SCAN_MARKER_STROKE_COLOR = createjs.Graphics.getRGB(255, 0, 0, 0.5)
-const SCAN_MARKER_FILL_COLOR = createjs.Graphics.getRGB(255, 0, 0, 1.5)
+    marker_radius
+    marker_stroke_color
+    marker_fill_color
 
-let prev_scan_markers = null;
-const listener = new ROSLIB.Topic({
-    ros: ros, name: '/scan', messageType: 'sensor_msgs/LaserScan'
-});
+    listener
+    prev_scan_markers
 
-listener.subscribe(function (msg) {
+    constructor(options) {
+        options = options || {}
+        this.app = options.app
+        this.topic = options.topic || "/scan"
+        this.marker_radius = options.marker_radius || 4
+        this.marker_stroke_color = options.marker_stroke_color || createjs.Graphics.getRGB(255, 0, 0, 0.5)
+        this.marker_fill_color = options.marker_fill_color || createjs.Graphics.getRGB(255, 0, 0, 1.0)
 
-    // TODO: Take tf origin frame from the header and dont assume that it is always `base_footprint`
+        this.listener = new ROSLIB.Topic({
+            ros: this.app.ros, name: this.topic, messageType: 'sensor_msgs/LaserScan'
+        });
 
-    // Find points in the laser scan frame
-    const num = msg.ranges.length
-    const angles = Array.from({length: num}, (_, i) => msg.angle_min + (msg.angle_max - msg.angle_min) / num * i)
-    const poses_2d = angles.flatMap((angle, index) => {
-        const range = msg.ranges[index];
-        if (range > msg.range_min && range < msg.range_max) {
-            return [[Math.cos(angle) * range, Math.sin(angle) * range, -angle]]
-        }
-        return []  // Skip this point
-    });
+        this.prev_scan_markers = null
 
-    if (app.base_footprint_tf === null) {
-        console.log('no tf');
-        return;
+        this.listener.subscribe(this.callback.bind(this));
+
     }
 
-    // TODO: We might be able to apply the tf transform to the container itself, and dont have to do it on each pose.
-    // Init the graphics component
-    const scan_markers = new createjs.Container();
+    callback(msg) {
 
-    const graphics = new createjs.Graphics();
-    graphics.beginStroke(SCAN_MARKER_STROKE_COLOR);
-    graphics.beginFill(SCAN_MARKER_FILL_COLOR);
-    graphics.drawCircle(0, 0, SCAN_MARKER_RADIUS)
-    graphics.endFill();
-    graphics.endStroke();
+        // TODO: Take tf origin frame from the header and dont assume that it is always `base_footprint`
 
-    // Transform each point and add it to the graphics
-    poses_2d.forEach(pt => {
-        // pt[2] += Math.PI / 2
-        const pose = new ROSLIB.Pose({
-            position: new ROSLIB.Vector3({
-                x: pt[0], y: pt[1], z: 0
-            }), orientation: new ROSLIB.Quaternion({
-                x: 0, y: 0, z: Math.cos(pt[2]), w: Math.sin(pt[2])
+        // Find points in the laser scan frame
+        const num = msg.ranges.length
+        const angles = Array.from({length: num}, (_, i) => msg.angle_min + (msg.angle_max - msg.angle_min) / num * i)
+        const poses_2d = angles.flatMap((angle, index) => {
+            const range = msg.ranges[index];
+            if (range > msg.range_min && range < msg.range_max) {
+                return [[Math.cos(angle) * range, Math.sin(angle) * range, -angle]]
+            }
+            return []  // Skip this point
+        });
 
+
+        if (this.app.base_footprint_tf === null) {
+            console.log('no tf');
+            return;
+        }
+
+        // TODO: We might be able to apply the tf transform to the container itself, and dont have to do it on each pose.
+        // Init the graphics component
+        const scan_markers = new createjs.Container();
+
+        const graphics = new createjs.Graphics();
+        graphics.beginStroke(this.marker_stroke_color);
+        graphics.beginFill(this.marker_fill_color);
+        graphics.drawCircle(0, 0, this.marker_radius)
+        graphics.endFill();
+        graphics.endStroke();
+
+        // Transform each point and add it to the graphics
+        poses_2d.forEach(pt => {
+            // pt[2] += Math.PI / 2
+            const pose = new ROSLIB.Pose({
+                position: new ROSLIB.Vector3({
+                    x: pt[0], y: pt[1], z: 0
+                }), orientation: new ROSLIB.Quaternion({
+                    x: 0, y: 0, z: Math.cos(pt[2]), w: Math.sin(pt[2])
+
+                })
             })
+            pose.applyTransform(this.app.base_footprint_tf)
+
+            const marker = new createjs.Shape(graphics)
+            marker.x = pose.position.x;
+            marker.y = -pose.position.y;
+            marker.rotation = this.app.viewer.scene.rosQuaternionToGlobalTheta(pose.orientation);
+            marker.scaleX = 1.0 / this.app.viewer.scene.scaleX;
+            marker.scaleY = 1.0 / this.app.viewer.scene.scaleY;
+
+            scan_markers.addChild(marker)
         })
-        pose.applyTransform(app.base_footprint_tf)
 
-        const marker = new createjs.Shape(graphics)
-        marker.x = pose.position.x;
-        marker.y = -pose.position.y;
-        marker.rotation = app.viewer.scene.rosQuaternionToGlobalTheta(pose.orientation);
-        marker.scaleX = 1.0 / app.viewer.scene.scaleX;
-        marker.scaleY = 1.0 / app.viewer.scene.scaleY;
+        // TODO: Just update the old one, dont make new ones everytime
+        if (this.prev_scan_markers !== null) this.app.viewer.scene.removeChild(this.prev_scan_markers)
 
-        scan_markers.addChild(marker)
-    })
+        this.app.viewer.addObject(scan_markers)
+        this.prev_scan_markers = scan_markers
+    }
 
-    // TODO: Just update the old one, dont make new ones everytime
-    if (prev_scan_markers !== null) app.viewer.scene.removeChild(prev_scan_markers)
+}
 
-    app.viewer.addObject(scan_markers)
-    prev_scan_markers = scan_markers
-});
+const app = new App(ros);
+
+const laser_scan = new LaserScanRenderer({app: app, topic: "/scan"})
 
 
 document.addEventListener('DOMContentLoaded', app.init.bind(app), false);
