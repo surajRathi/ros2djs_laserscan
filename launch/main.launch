@@ -17,7 +17,8 @@
           args="$(find web_laser_disp)/data/rail_lab_no_furniture.yaml"/>
 
 
-    <node pkg="web_laser_disp" type="fake_obs.py" name="fake_obs"/>
+    <!--<node pkg="web_laser_disp" type="fake_obs.py" name="fake_obs"/>-->
+    <!--<include file="$(find rplidar_ros)/launch/view_rplidar_a3.launch"/>-->
 
     <node pkg="tf2_ros" type="static_transform_publisher" name="map_to_footprint_tf"
           args="3 0 0 0 0 0 map base_footprint"/>
