@@ -11,6 +11,7 @@ ros.on('close', () => console.log('Connection to websocket server closed.'));
 
 class App {
     ground_frame = "map"
+    base_frame = null
     width = 720
     height = 655
     scale_factor = 1.0
@@ -75,7 +76,10 @@ class App {
 const app = new App();
 
 
-// Set up laser scan display:
+// Laser Scan Display Parameters
+const SCAN_MARKER_RADIUS = 4
+const SCAN_MARKER_STROKE_COLOR = createjs.Graphics.getRGB(255, 0, 0, 0.5)
+const SCAN_MARKER_FILL_COLOR = createjs.Graphics.getRGB(255, 0, 0, 1.5)
 
 let prev_scan_markers = null;
 const listener = new ROSLIB.Topic({
@@ -83,12 +87,12 @@ const listener = new ROSLIB.Topic({
 });
 
 listener.subscribe(function (msg) {
+
     // TODO: Take tf origin frame from the header and dont assume that it is always `base_footprint`
 
+    // Find points in the laser scan frame
     const num = msg.ranges.length
     const angles = Array.from({length: num}, (_, i) => msg.angle_min + (msg.angle_max - msg.angle_min) / num * i)
-
-    // Find points in the laser scan frame
     const poses_2d = angles.flatMap((angle, index) => {
         const range = msg.ranges[index];
         if (range > msg.range_min && range < msg.range_max) {
@@ -97,15 +101,25 @@ listener.subscribe(function (msg) {
         return []  // Skip this point
     });
 
-    // TODO: We might be able to apply the tf transform to the container itself, and dont have to do it on each pose.
-    const scan_markers = new createjs.Container();
-
     if (app.base_footprint_tf === null) {
         console.log('no tf');
         return;
     }
 
+    // TODO: We might be able to apply the tf transform to the container itself, and dont have to do it on each pose.
+    // Init the graphics component
+    const scan_markers = new createjs.Container();
+
+    const graphics = new createjs.Graphics();
+    graphics.beginStroke(SCAN_MARKER_STROKE_COLOR);
+    graphics.beginFill(SCAN_MARKER_FILL_COLOR);
+    graphics.drawCircle(0, 0, SCAN_MARKER_RADIUS)
+    graphics.endFill();
+    graphics.endStroke();
+
+    // Transform each point and add it to the graphics
     poses_2d.forEach(pt => {
+        // pt[2] += Math.PI / 2
         const pose = new ROSLIB.Pose({
             position: new ROSLIB.Vector3({
                 x: pt[0], y: pt[1], z: 0
@@ -116,22 +130,12 @@ listener.subscribe(function (msg) {
         })
         pose.applyTransform(app.base_footprint_tf)
 
-        const marker = new ROS2D.NavigationArrow({
-            size: 0,
-            strokeSize: 3,
-            strokeColor: createjs.Graphics.getRGB(255, 0, 0, 0.5),
-            fillColor: createjs.Graphics.getRGB(255, 0, 0, 0.5),
-            pulse: false,
-
-        });
-
+        const marker = new createjs.Shape(graphics)
         marker.x = pose.position.x;
         marker.y = -pose.position.y;
-        // marker.rotation = (app.viewer.scene.rosQuaternionToGlobalTheta(pose.orientation) + Math.PI / 2) % (Math.PI * 2);
-        marker.rotation = (app.viewer.scene.rosQuaternionToGlobalTheta(pose.orientation)) % (Math.PI * 2);
+        marker.rotation = app.viewer.scene.rosQuaternionToGlobalTheta(pose.orientation);
         marker.scaleX = 1.0 / app.viewer.scene.scaleX;
         marker.scaleY = 1.0 / app.viewer.scene.scaleY;
-
 
         scan_markers.addChild(marker)
     })
