@@ -1,6 +1,7 @@
 // Connect to ROS
 const ros = new ROSLIB.Ros({
-    url: 'ws://localhost:9090'
+    url: 'ws://192.168.0.12:9090'
+    // url: 'ws://localhost:9090'
 });
 
 ros.on('connection', () => console.log('Connected to websocket server.'));
@@ -117,7 +118,7 @@ listener.subscribe(function (msg) {
 
         const marker = new ROS2D.NavigationArrow({
             size: 0,
-            strokeSize: 5,
+            strokeSize: 3,
             strokeColor: createjs.Graphics.getRGB(255, 0, 0, 0.5),
             fillColor: createjs.Graphics.getRGB(255, 0, 0, 0.5),
             pulse: false,
@@ -126,7 +127,8 @@ listener.subscribe(function (msg) {
 
         marker.x = pose.position.x;
         marker.y = -pose.position.y;
-        marker.rotation = app.viewer.scene.rosQuaternionToGlobalTheta(pose.orientation);
+        // marker.rotation = (app.viewer.scene.rosQuaternionToGlobalTheta(pose.orientation) + Math.PI / 2) % (Math.PI * 2);
+        marker.rotation = (app.viewer.scene.rosQuaternionToGlobalTheta(pose.orientation)) % (Math.PI * 2);
         marker.scaleX = 1.0 / app.viewer.scene.scaleX;
         marker.scaleY = 1.0 / app.viewer.scene.scaleY;
 
