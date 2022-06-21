@@ -21,6 +21,7 @@ class App {
     div_el
 
     viewer
+    map_client
 
     init() {
         // Initialize TF
@@ -34,6 +35,11 @@ class App {
         this.div_el = document.getElementById(this.div_el_id)
         this.viewer = new ROS3D.Viewer({
             divID: this.div_el_id, width: this.width, height: this.height, antialias: true
+        });
+
+        // Set up the map client.
+        this.map_client = new ROS3D.OccupancyGridClient({
+            ros: ros, rootObject: this.viewer.scene, topic: '/map', continuous: true, tf_client: this.tf_client,
         });
     }
 }
