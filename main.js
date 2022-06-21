@@ -12,10 +12,10 @@ class App {
     ground_frame = "map"
     width = 720
     height = 655
-    scale_factor = 1.0
+    // scale_factor = 1.0
 
     // tf_client
-    // base_footprint_tf = null
+    base_footprint_tf = null
 
     div_el_id = 'nav'
     div_el
