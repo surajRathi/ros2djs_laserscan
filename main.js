@@ -38,9 +38,10 @@ class App {
 
         // You have to tao thrice quickly to activate the trigger the catcher idk why
         class ClickCatcher extends THREE.EventDispatcher {
-            constructor(mouseHandler) {
+            constructor(mouseHandler, scene) {
                 super();
-                this.viewer = mouseHandler
+                this.mouse_handler = mouseHandler
+                this.scene = scene
                 this.marker = null
 
                 this.start = null
@@ -72,21 +73,33 @@ class App {
                     // console.log(ev);
 
                     const position = ROS3D.intersectPlane(ev.mouseRay, new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 1))
-                    console.log(this.start)
-                    console.log(position)
+                    const theta = Math.atan2(position.y - this.start.y, position.x - this.start.x)
+
+                    console.log(this.start, theta * 180 / Math.PI)
+
+                    if (this.marker !== null) {
+                        this.scene.remove(this.marker)
+                    }
+                    this.marker = new ROS3D.Arrow({
+                        origin: this.start,
+                        direction: new THREE.Vector3(Math.cos(theta), Math.sin(theta), 0),
+                        material: ROS3D.makeColorMaterial(1.0, 1.0, 0.0, 1.0)
+                    })
+                    this.scene.add(this.marker)
+                    console.log(this.marker)
 
                     // Disable for a while
-                    this.viewer.fallbackTarget = this.viewer.camera_controls
+                    this.mouse_handler.fallbackTarget = this.mouse_handler.camera_controls
                     setTimeout(() => {
                         console.log("Re activating the catcher")
-                        this.viewer.fallbackTarget = this.viewer.click_catcher
+                        this.mouse_handler.fallbackTarget = this.mouse_handler.click_catcher
                     }, 5000) // two second cool down
                 }
 
             }
         }
 
-        this.cc = new ClickCatcher(this.viewer.highlighter.mouseHandler)
+        this.cc = new ClickCatcher(this.viewer.highlighter.mouseHandler, this.viewer.scene)
         this.viewer.highlighter.mouseHandler.camera_controls = this.viewer.highlighter.mouseHandler.fallbackTarget
         this.viewer.highlighter.mouseHandler.click_catcher = this.cc
         this.viewer.highlighter.mouseHandler.fallbackTarget = this.viewer.highlighter.mouseHandler.click_catcher
