@@ -41,13 +41,17 @@ class App {
             constructor() {
                 super();
                 this.active = true
+                this.marker = null
+
+                this.start = null
 
                 console.log("Made click Catcher")
                 const dummy = this.dummy.bind(this)
-                // this.addEventListener('mousedown', dummy);
+                const start_dummy = this.start_dummy.bind(this)
+                this.addEventListener('mousedown', start_dummy);
                 this.addEventListener('mouseup', dummy);
                 // this.addEventListener('mousemove', dummy);
-                // this.addEventListener('touchstart', dummy);
+                this.addEventListener('touchstart', start_dummy);
                 // this.addEventListener('touchmove', dummy);
                 this.addEventListener('touchend', dummy);
                 // Chrome/Firefox have different events here
@@ -55,12 +59,20 @@ class App {
                 // this.addEventListener('DOMMouseScroll', dummy);
             }
 
+            start_dummy(ev) {
+                if (ev.type === 'mousedown' || ev.type === 'touchstart') {
+                    this.start = ROS3D.intersectPlane(ev.mouseRay, new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 1))
+                    console.log(this.start)
+                }
+            }
+
             dummy(ev) {
                 if (ev.type === 'mouseup' || ev.type === 'touchend') {
                     console.log("dummy callsed!!")
-                    console.log(ev);
+                    // console.log(ev);
 
                     const position = ROS3D.intersectPlane(ev.mouseRay, new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 1))
+                    console.log(this.start)
                     console.log(position)
 
                     // Disable for a while
