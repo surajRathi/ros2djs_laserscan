@@ -86,7 +86,6 @@ class App {
                         material: ROS3D.makeColorMaterial(1.0, 1.0, 0.0, 1.0)
                     })
                     this.scene.add(this.marker)
-                    console.log(this.marker)
 
                     // Disable for a while
                     this.mouse_handler.fallbackTarget = this.mouse_handler.camera_controls
