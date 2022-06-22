@@ -37,10 +37,10 @@ class App {
         });
 
         // You have to tao thrice quickly to activate the trigger the catcher idk why
-        class ClickCatcher extends THREE.Object3D { //THREE.EventDispatcher {
-            constructor() {
+        class ClickCatcher extends THREE.EventDispatcher {
+            constructor(mouseHandler) {
                 super();
-                this.active = true
+                this.viewer = mouseHandler
                 this.marker = null
 
                 this.start = null
@@ -76,27 +76,20 @@ class App {
                     console.log(position)
 
                     // Disable for a while
-                    this.active = false
+                    this.viewer.fallbackTarget = this.viewer.camera_controls
                     setTimeout(() => {
                         console.log("Re activating the catcher")
-                        this.active = true
+                        this.viewer.fallbackTarget = this.viewer.click_catcher
                     }, 5000) // two second cool down
                 }
 
             }
-
-            raycast(raycaster, intersects) {
-                const that = this;
-                if (this.active) intersects.push({
-                    distance: 0.0, distanceToRay: 0.0, point: null, index: null, face: null, object: that
-                })
-            }
-
-
         }
 
-        this.cc = new ClickCatcher()
-        this.viewer.addObject(this.cc, true)
+        this.cc = new ClickCatcher(this.viewer.highlighter.mouseHandler)
+        this.viewer.highlighter.mouseHandler.camera_controls = this.viewer.highlighter.mouseHandler.fallbackTarget
+        this.viewer.highlighter.mouseHandler.click_catcher = this.cc
+        this.viewer.highlighter.mouseHandler.fallbackTarget = this.viewer.highlighter.mouseHandler.click_catcher
         // How to get click position
         // 1. Make a class ```class OrbitControls extends THREE$1.EventDispatcher {```
         // 2. When in click mode, add a selectable object ( ```  addObject(object, selectable) ``` )
