@@ -36,6 +36,7 @@ class App {
             divID: this.div_el_id, width: this.width, height: this.height, antialias: true
         });
 
+        // You have to tao thrice quickly to activate the trigger the catcher idk why
         class ClickCatcher extends THREE.Object3D { //THREE.EventDispatcher {
             constructor() {
                 super();
@@ -43,21 +44,31 @@ class App {
 
                 console.log("Made click Catcher")
                 const dummy = this.dummy.bind(this)
-                this.addEventListener('mousedown', dummy);
+                // this.addEventListener('mousedown', dummy);
                 this.addEventListener('mouseup', dummy);
-                this.addEventListener('mousemove', dummy);
-                this.addEventListener('touchstart', dummy);
-                this.addEventListener('touchmove', dummy);
+                // this.addEventListener('mousemove', dummy);
+                // this.addEventListener('touchstart', dummy);
+                // this.addEventListener('touchmove', dummy);
                 this.addEventListener('touchend', dummy);
                 // Chrome/Firefox have different events here
-                this.addEventListener('mousewheel', dummy);
-                this.addEventListener('DOMMouseScroll', dummy);
+                // this.addEventListener('mousewheel', dummy);
+                // this.addEventListener('DOMMouseScroll', dummy);
             }
 
             dummy(ev) {
-                if (ev.type === 'mouseup') {
+                if (ev.type === 'mouseup' || ev.type === 'touchend') {
                     console.log("dummy callsed!!")
                     console.log(ev);
+
+                    const position = ROS3D.intersectPlane(ev.mouseRay, new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 1))
+                    console.log(position)
+
+                    // Disable for a while
+                    this.active = false
+                    setTimeout(() => {
+                        console.log("Re activating the catcher")
+                        this.active = true
+                    }, 5000) // two second cool down
                 }
 
             }
