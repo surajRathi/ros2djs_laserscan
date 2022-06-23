@@ -24,12 +24,15 @@ class App {
     map_client
     laser_client
 
+    constructor(ros) {
+        this.ros = ros
+    }
+
     init() {
         // Initialize TF
         this.tf_client = new ROSLIB.TFClient({
-            ros: ros, fixedFrame: this.ground_frame, angularThres: 0.01, transThres: 0.01
+            ros: this.ros, fixedFrame: this.ground_frame, angularThres: 0.01, transThres: 0.01
         })
-        // this.tf_client.subscribe('/base_footprint', transform => this.base_footprint_tf = transform)
 
 
         // Create the frontend
@@ -38,10 +41,16 @@ class App {
             divID: this.div_el_id, width: this.width, height: this.height, antialias: true
         });
 
+        this.action_client = new ROSLIB.ActionClient({
+            ros: this.ros, serverName: '/move_base', actionName: 'move_base/goal'
+        });
+
         // You have to tao thrice quickly to activate the trigger the catcher idk why
         class ClickCatcher extends THREE.EventDispatcher {
-            constructor(mouseHandler, scene) {
+            constructor(mouseHandler, scene, ros, ac_client) {
                 super();
+                this.action_client = ac_client
+                this.ros = ros
                 this.mouse_handler = mouseHandler
                 this.scene = scene
                 this.marker = null
@@ -53,13 +62,12 @@ class App {
                 const start_dummy = this.start_dummy.bind(this)
                 this.addEventListener('mousedown', start_dummy);
                 this.addEventListener('mouseup', dummy);
-                // this.addEventListener('mousemove', dummy);
                 this.addEventListener('touchstart', start_dummy);
-                // this.addEventListener('touchmove', dummy);
                 this.addEventListener('touchend', dummy);
-                // Chrome/Firefox have different events here
-                // this.addEventListener('mousewheel', dummy);
-                // this.addEventListener('DOMMouseScroll', dummy);
+
+                // TODO: Show the arrow when they are dragging
+                // this.addEventListener('mousemove', dummy);
+                // this.addEventListener('touchmove', dummy);
             }
 
             start_dummy(ev) {
@@ -89,18 +97,48 @@ class App {
                     })
                     this.scene.add(this.marker)
 
-                    // Disable for a while
+                    // Disable it
                     this.mouse_handler.fallbackTarget = this.mouse_handler.camera_controls
-                    // setTimeout(() => {
-                    //     console.log("Re activating the catcher")
-                    //     this.mouse_handler.fallbackTarget = this.mouse_handler.click_catcher
-                    // }, 5000) // two second cool down
+
+                    const currentTime = new Date();
+                    const secs = Math.floor(currentTime.getTime() / 1000);
+                    const nsecs = Math.round(1000000000 * (currentTime.getTime() / 1000 - secs));
+                    const goal = new ROSLIB.Goal({
+                        actionClient: this.action_client, goalMessage: {
+                            target_pose: {
+                                header: {
+                                    frame_id: 'map', stamp: {
+                                        secs: secs, nsecs: nsecs
+                                    }
+                                },
+
+                                pose: {
+                                    position: {
+                                        x: this.start.x, y: this.start.y, z: this.start.z
+                                    }, orientation: {
+                                        x: 0, y: 0, z: Math.sin(theta / 2), w: Math.cos(theta / 2)
+                                    }
+                                }
+
+                            }
+                        }
+                    });
+
+                    goal.on('feedback', function (feedback) {
+                        console.log('Feedback: ' + feedback.sequence);
+                    });
+
+                    goal.on('result', function (result) {
+                        console.log('Final Result: ' + result.sequence);
+                    });
+
+                    goal.send();
                 }
 
             }
         }
 
-        this.cc = new ClickCatcher(this.viewer.highlighter.mouseHandler, this.viewer.scene)
+        this.cc = new ClickCatcher(this.viewer.highlighter.mouseHandler, this.viewer.scene, this.ros, this.action_client)
         this.viewer.highlighter.mouseHandler.camera_controls = this.viewer.highlighter.mouseHandler.fallbackTarget
         this.viewer.highlighter.mouseHandler.click_catcher = this.cc
 
@@ -110,7 +148,7 @@ class App {
 
         // Set up the map client.
         this.map_client = new ROS3D.OccupancyGridClient({
-            ros: ros, rootObject: this.viewer.scene, topic: '/map', continuous: true, tf_client: this.tf_client,
+            ros: this.ros, rootObject: this.viewer.scene, topic: '/map', continuous: true, tf_client: this.tf_client,
         });
 
         // See also:
@@ -118,7 +156,7 @@ class App {
         //  messageRatio (optional) - message subsampling ratio (default: 1, no subsampling)
 
         this.laser_client = new ROS3D.LaserScan({
-            ros: ros,
+            ros: this.ros,
             rootObject: this.viewer.scene,
             topic: '/scan',
             tfClient: this.tf_client,
@@ -127,12 +165,12 @@ class App {
         })
 
         this.pose_client = new ROS3D.PoseWithCovariance({
-            ros: ros, rootObject: this.viewer.scene, topic: '/amcl_pose', tfClient: this.tf_client, color: 0xF80000  // PointsMaterial
+            ros: this.ros, rootObject: this.viewer.scene, topic: '/amcl_pose', tfClient: this.tf_client, color: 0xF80000  // PointsMaterial
         })
 
     }
 }
 
-const app = new App();
+const app = new App(ros);
 
 document.addEventListener('DOMContentLoaded', app.init.bind(app), false);
