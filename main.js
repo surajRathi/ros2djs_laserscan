@@ -18,6 +18,8 @@ class App {
     div_el_id = 'nav'
     div_el
 
+    goal_button_el_id = 'goal_pose_button'
+
     viewer
     map_client
     laser_client
@@ -89,10 +91,10 @@ class App {
 
                     // Disable for a while
                     this.mouse_handler.fallbackTarget = this.mouse_handler.camera_controls
-                    setTimeout(() => {
-                        console.log("Re activating the catcher")
-                        this.mouse_handler.fallbackTarget = this.mouse_handler.click_catcher
-                    }, 5000) // two second cool down
+                    // setTimeout(() => {
+                    //     console.log("Re activating the catcher")
+                    //     this.mouse_handler.fallbackTarget = this.mouse_handler.click_catcher
+                    // }, 5000) // two second cool down
                 }
 
             }
@@ -101,24 +103,10 @@ class App {
         this.cc = new ClickCatcher(this.viewer.highlighter.mouseHandler, this.viewer.scene)
         this.viewer.highlighter.mouseHandler.camera_controls = this.viewer.highlighter.mouseHandler.fallbackTarget
         this.viewer.highlighter.mouseHandler.click_catcher = this.cc
-        this.viewer.highlighter.mouseHandler.fallbackTarget = this.viewer.highlighter.mouseHandler.click_catcher
-        // How to get click position
-        // 1. Make a class ```class OrbitControls extends THREE$1.EventDispatcher {```
-        // 2. When in click mode, add a selectable object ( ```  addObject(object, selectable) ``` )
-        // 3. Give the selectable object an even listener
-        // 4. See what we actually get from there
-        /*
-            // add event listeners
-            this.addEventListener('mousedown', onMouseDown);
-            this.addEventListener('mouseup', onMouseUp);
-            this.addEventListener('mousemove', onMouseMove);
-            this.addEventListener('touchstart', onTouchDown);
-            this.addEventListener('touchmove', onTouchMove);
-            this.addEventListener('touchend', onTouchEnd);
-            // Chrome/Firefox have different events here
-            this.addEventListener('mousewheel', onMouseWheel);
-            this.addEventListener('DOMMouseScroll', onMouseWheel);
-        */
+
+        document.getElementById(this.goal_button_el_id).onclick = (ev) => {
+            this.viewer.highlighter.mouseHandler.fallbackTarget = this.viewer.highlighter.mouseHandler.click_catcher
+        }
 
         // Set up the map client.
         this.map_client = new ROS3D.OccupancyGridClient({
