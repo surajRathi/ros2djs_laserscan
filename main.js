@@ -7,6 +7,8 @@ ros.on('connection', () => console.log('Connected to websocket server.'));
 ros.on('error', error => console.log('Error connecting to websocket server: ', error));
 ros.on('close', () => console.log('Connection to websocket server closed.'));
 
+const send_goal_to_actionlib = false;
+const send_goal_to_executor = true;
 
 class App {
     ground_frame = "map"
@@ -68,6 +70,14 @@ class App {
                 // TODO: Show the arrow when they are dragging
                 // this.addEventListener('mousemove', dummy);
                 // this.addEventListener('touchmove', dummy);
+
+                if (send_goal_to_executor) {
+                    this.pub_topic = new ROSLIB.Topic({
+                        ros: this.ros, name: "/cmd", messageType: "std_msgs/String",
+
+                    })
+                    this.pub_topic.advertise()
+                }
             }
 
             start_dummy(ev) {
@@ -100,39 +110,49 @@ class App {
                     // Disable it
                     this.mouse_handler.fallbackTarget = this.mouse_handler.camera_controls
 
-                    const currentTime = new Date();
-                    const secs = Math.floor(currentTime.getTime() / 1000);
-                    const nsecs = Math.round(1000000000 * (currentTime.getTime() / 1000 - secs));
-                    const goal = new ROSLIB.Goal({
-                        actionClient: this.action_client, goalMessage: {
-                            target_pose: {
-                                header: {
-                                    frame_id: 'map', stamp: {
-                                        secs: secs, nsecs: nsecs
-                                    }
-                                },
+                    if (send_goal_to_actionlib) {
+                        const currentTime = new Date();
+                        const secs = Math.floor(currentTime.getTime() / 1000);
+                        const nsecs = Math.round(1000000000 * (currentTime.getTime() / 1000 - secs));
+                        const goal = new ROSLIB.Goal({
+                            actionClient: this.action_client, goalMessage: {
+                                target_pose: {
+                                    header: {
+                                        frame_id: 'map', stamp: {
+                                            secs: secs, nsecs: nsecs
+                                        }
+                                    },
 
-                                pose: {
-                                    position: {
-                                        x: this.start.x, y: this.start.y, z: this.start.z
-                                    }, orientation: {
-                                        x: 0, y: 0, z: Math.sin(theta / 2), w: Math.cos(theta / 2)
+                                    pose: {
+                                        position: {
+                                            x: this.start.x, y: this.start.y, z: this.start.z
+                                        }, orientation: {
+                                            x: 0, y: 0, z: Math.sin(theta / 2), w: Math.cos(theta / 2)
+                                        }
                                     }
+
                                 }
-
                             }
-                        }
-                    });
+                        });
 
-                    goal.on('feedback', function (feedback) {
-                        console.log('Feedback: ' + feedback.sequence);
-                    });
+                        goal.on('feedback', function (feedback) {
+                            console.log('Feedback: ' + feedback.sequence);
+                        });
 
-                    goal.on('result', function (result) {
-                        console.log('Final Result: ' + result.sequence);
-                    });
+                        goal.on('result', function (result) {
+                            console.log('Final Result: ' + result.sequence);
+                        });
 
-                    goal.send();
+                        goal.send();
+                    }
+
+                    // TODO: Dont do string stuff, use native js objects and the JSON library
+                    if (send_goal_to_executor) {
+                        this.pub_topic.publish(new ROSLIB.Message({
+                            data: `{"cmd": "send_goal","header": {"frame_id": "/map"},"pose": {"position": {"x": ${this.start.x}, "y": ${this.start.y}, "z": ${this.start.z}},"orientation": {"x": 0.0, "y": 0.0, "z": ${Math.sin(theta / 2)}}}}`
+                        }))
+                        // console.log(`{"cmd": "send_goal","header": {"frame_id": "/map"},"pose": {"position": {"x": ${this.start.x}, "y": ${this.start.y}, "z": ${this.start.z}},"orientation": {"x": 0.0, "y": 0.0, "z": ${Math.sin(theta / 2)}}}}`)
+                    }
                 }
 
             }
