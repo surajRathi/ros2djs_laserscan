@@ -6,9 +6,9 @@
 
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="stylesheet" href="index.css">
 
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/three@0.141.0/build/three.min.js"></script>
-    <!--    <script type="text/javascript" src="http://static.robotwebtools.org/threejs/current/three.min.js"></script>-->
     <script type="text/javascript"
             src="https://cdn.jsdelivr.net/npm/eventemitter2@6.4.5/lib/eventemitter2.min.js"></script>
     <script type="text/javascript" src="http://static.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
@@ -19,13 +19,15 @@
 </head>
 <body>
 
-<h1>See web console too</h1>
-<button type="button" id="goal_pose_button">Send Goal Location</button>
-<br>
-<label for="time_to_sleep">Time to sleep in seconds</label>
-<input type="number" id="time_to_sleep" name="time_to_sleep" min="0" max="10">
-<button type="button" id="sleep_button">Send Sleep command</button>
+<div id="main_div">
+    <h1>See the Web Console</h1>
+    <button type="button" id="goal_pose_button">Send Goal Location</button>
+    <br>
+    <label for="time_to_sleep">Time to sleep in seconds</label>
+    <input type="number" id="time_to_sleep" name="time_to_sleep" min="0" max="10">
+    <button type="button" id="sleep_button">Send Sleep command</button>
 
-<div id="nav"></div>
+    <div id="nav"></div>
+</div>
 </body>
 </html>
