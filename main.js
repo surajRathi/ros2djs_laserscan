@@ -21,6 +21,8 @@ class App {
     div_el
 
     goal_button_el_id = 'goal_pose_button'
+    time_textbox_el_id = 'time_to_sleep'
+    sleep_button_el_id = 'sleep_button'
 
     viewer
     map_client
@@ -164,6 +166,22 @@ class App {
 
         document.getElementById(this.goal_button_el_id).onclick = (ev) => {
             this.viewer.highlighter.mouseHandler.fallbackTarget = this.viewer.highlighter.mouseHandler.click_catcher
+        }
+
+
+        this.executor_pub = new ROSLIB.Topic({
+            ros: this.ros, name: "/cmd", messageType: "std_msgs/String",
+
+        })
+        this.executor_pub.advertise()
+        document.getElementById(this.sleep_button_el_id).onclick = (ev) => {
+            const sleep_obj = {
+                "cmd": "sleep", "time": parseFloat(document.getElementById(this.time_textbox_el_id).value)
+            }
+
+            this.executor_pub.publish(new ROSLIB.Message({
+                data: JSON.stringify(sleep_obj)
+            }))
         }
 
         // Set up the map client.
