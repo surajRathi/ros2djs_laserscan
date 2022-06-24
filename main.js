@@ -150,10 +150,16 @@ class App {
 
                     // TODO: Dont do string stuff, use native js objects and the JSON library
                     if (send_goal_to_executor) {
+                        const send_goal_obj = {
+                            "cmd": "send_goal", "header": {"frame_id": "/map"}, "pose": {
+                                "position": {"x": this.start.x, "y": this.start.y, "z": this.start.z},
+                                "orientation": {"x": 0.0, "y": 0.0, "z": Math.sin(theta / 2)}
+                            }
+                        }
+
                         this.pub_topic.publish(new ROSLIB.Message({
-                            data: `{"cmd": "send_goal","header": {"frame_id": "/map"},"pose": {"position": {"x": ${this.start.x}, "y": ${this.start.y}, "z": ${this.start.z}},"orientation": {"x": 0.0, "y": 0.0, "z": ${Math.sin(theta / 2)}}}}`
+                            data: JSON.stringify(send_goal_obj)
                         }))
-                        // console.log(`{"cmd": "send_goal","header": {"frame_id": "/map"},"pose": {"position": {"x": ${this.start.x}, "y": ${this.start.y}, "z": ${this.start.z}},"orientation": {"x": 0.0, "y": 0.0, "z": ${Math.sin(theta / 2)}}}}`)
                     }
                 }
 
