@@ -112,7 +112,7 @@ class App {
                     this.mouse_handler.fallbackTarget = this.mouse_handler.camera_controls
 
                     const send_goal_obj = {
-                        "cmd": "send_goal", "header": {"frame_id": "/map"}, "pose": {
+                        "cmd": "send_goal", "header": {"frame_id": "map"}, "pose": {
                             "position": {"x": this.start.x, "y": this.start.y, "z": this.start.z},
                             "orientation": {"x": 0.0, "y": 0.0, "z": Math.sin(theta / 2)}
                         }
