@@ -16,8 +16,7 @@ ROS2D.ImageMap = function (options) {
 
     // save the metadata we need
     this.pose = new ROSLIB.Pose({
-        position: message.origin.position,
-        orientation: message.origin.orientation
+        position: message.origin.position, orientation: message.origin.orientation
     });
 
     // set the size
@@ -67,9 +66,7 @@ ROS2D.ImageMapClient = function (options) {
 
     // subscribe to the topic
     const rosTopic = new ROSLIB.Topic({
-        ros: ros,
-        name: topic,
-        messageType: 'nav_msgs/MapMetaData'
+        ros: ros, name: topic, messageType: 'nav_msgs/MapMetaData'
     });
 
     rosTopic.subscribe(function (message) {
@@ -78,8 +75,7 @@ ROS2D.ImageMapClient = function (options) {
 
         // create the image
         that.currentImage = new ROS2D.ImageMap({
-            message: message,
-            image: that.image
+            message: message, image: that.image
         });
         that.rootObject.addChild(that.currentImage);
         // work-around for a bug in easeljs -- needs a second object to render correctly
@@ -107,8 +103,7 @@ ROS2D.OccupancyGrid = function (options) {
 
     // save the metadata we need
     this.pose = new ROSLIB.Pose({
-        position: message.info.origin.position,
-        orientation: message.info.origin.orientation
+        position: message.info.origin.position, orientation: message.info.origin.orientation
     });
 
     // set the size
@@ -142,7 +137,7 @@ ROS2D.OccupancyGrid = function (options) {
             // b
             imageData.data[++i] = val;
             // a
-            imageData.data[++i] = 255;
+            imageData.data[++i] = data === -1 ? 0 : 255;
         }
     }
     context.putImageData(imageData, 0, 0);
@@ -194,10 +189,7 @@ ROS2D.OccupancyGridClient = function (options) {
 
     // subscribe to the topic
     const rosTopic = new ROSLIB.Topic({
-        ros: ros,
-        name: topic,
-        messageType: 'nav_msgs/OccupancyGrid',
-        compression: 'png'
+        ros: ros, name: topic, messageType: 'nav_msgs/OccupancyGrid', compression: 'png'
     });
 
     rosTopic.subscribe(function (message) {
@@ -226,6 +218,252 @@ ROS2D.OccupancyGridClient = function (options) {
     });
 };
 ROS2D.OccupancyGridClient.prototype.__proto__ = EventEmitter2.prototype;
+
+const MY2D = {}
+// var MY2D = MY2D || {}
+MY2D.ImageMapU = function (options) {
+    options = options || {};
+    const message = options.message;
+    const image = options.image;
+
+    // save the metadata we need
+    this.pose = new ROSLIB.Pose({
+        position: message.origin.position, orientation: message.origin.orientation
+    });
+
+    // set the size
+    this.width = message.width;
+    this.height = message.height;
+
+    // create the bitmap
+    createjs.Bitmap.call(this, image);
+    // change Y direction
+    this.y = -this.height * message.resolution;
+
+    // scale the image
+    this.scaleX = message.resolution;
+    this.scaleY = message.resolution;
+    this.width *= this.scaleX;
+    this.height *= this.scaleY;
+
+    // set the pose
+    this.x += this.pose.position.x;
+    this.y -= this.pose.position.y;
+};
+MY2D.ImageMapU.prototype.__proto__ = createjs.Bitmap.prototype;
+
+/**
+ * A image map is a PNG image scaled to fit to the dimensions of a OccupancyGrid.
+ *
+ * Emits the following events:
+ *   * 'change' - there was an update or change in the map
+ *
+ * @constructor
+ * @param options - object with following keys:
+ *   * ros - the ROSLIB.Ros connection handle
+ *   * topic (optional) - the map meta data topic to listen to
+ *   * image - the image URL to load
+ *   * rootObject (optional) - the root object to add this marker to
+ */
+MY2D.ImageMapClientU = function (options) {
+    const that = this;
+    options = options || {};
+    const ros = options.ros;
+    const topic = options.topic || '/map_metadata';
+    this.image = options.image;
+    this.rootObject = options.rootObject || new createjs.Container();
+
+    // create an empty shape to start with
+    this.currentImage = new createjs.Shape();
+
+    // subscribe to the topic
+    const rosTopic = new ROSLIB.Topic({
+        ros: ros, name: topic, messageType: 'nav_msgs/MapMetaData'
+    });
+
+    rosTopic.subscribe(function (message) {
+        // we only need this once
+        rosTopic.unsubscribe();
+
+        // create the image
+        that.currentImage = new MY2D.ImageMapU({
+            message: message, image: that.image
+        });
+        that.rootObject.addChild(that.currentImage);
+        // work-around for a bug in easeljs -- needs a second object to render correctly
+        that.rootObject.addChild(new ROS2D.Grid({size: 1}));
+
+        that.emit('change');
+    });
+};
+MY2D.ImageMapClientU.prototype.__proto__ = EventEmitter2.prototype;
+
+/**
+ * An OccupancyGrid can convert a ROS occupancy grid message into a createjs Bitmap object.
+ *
+ * @constructor
+ * @param options - object with following keys:
+ *   * message - the occupancy grid message
+ */
+MY2D.OccupancyGridU = function (options) {
+    options = options || {};
+    const message = options.message;
+
+    // internal drawing canvas
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    document.body.appendChild(canvas)
+
+    // save the metadata we need
+    this.pose = new ROSLIB.Pose({
+        position: message.info.origin.position, orientation: message.info.origin.orientation
+    });
+
+    // set the size
+    this.width = message.info.width;
+    this.height = message.info.height;
+    canvas.width = this.width;
+    canvas.height = this.height;
+
+    const imageData = context.createImageData(this.width, this.height);
+    for (let row = 0; row < this.height; row++) {
+        for (let col = 0; col < this.width; col++) {
+            // determine the index into the map data
+            const mapI = col + ((this.height - row - 1) * this.width);
+            // determine the value
+            const data = message.data[mapI];
+            let val;
+            if (data === 100) {
+                val = 0;
+            } else if (data === 0) {
+                val = 255;
+            } else {
+                val = 127;
+            }
+
+            // determine the index into the image data array
+            let i = (col + (row * this.width)) * 4;
+            // r
+            imageData.data[i] = val;
+            // g
+            imageData.data[++i] = val;
+            // b
+            imageData.data[++i] = val;
+            // a
+            imageData.data[++i] = data === -1 ? 0 : 255;
+        }
+    }
+    context.putImageData(imageData, 0, 0);
+
+    // create the bitmap
+    createjs.Bitmap.call(this, canvas);
+    // change Y direction
+    this.y = -this.height * message.info.resolution;
+
+    // scale the image
+    this.scaleX = message.info.resolution;
+    this.scaleY = message.info.resolution;
+    this.width *= this.scaleX;
+    this.height *= this.scaleY;
+
+    // set the pose
+    this.x += this.pose.position.x;
+    this.y -= this.pose.position.y;
+
+    const that = this;
+
+    this.update = function (msg) {
+        console.log(msg.header.seq)
+        const x = msg.x, y = msg.y, width = msg.width, height = msg.height;
+        const mdata = msg.data;
+        console.log(msg, Math.max(...mdata))
+
+        const imageData = context.createImageData(width, height);
+        for (let row = 0; row < height; row++) {
+            for (let col = 0; col < width; col++) {
+                // determine the index into the map data
+                const mapI = col + ((height - row - 1) * width);
+                // determine the value
+                const data = mdata[mapI];
+                let val;
+                if (data > 250 * 100 / 255) {
+                    val = 255;
+                } else if (data > 128 * 100 / 255) {
+                    val = 127;
+                } else {
+                    val = 0;
+                }
+
+                // determine the index into the image data array
+                let i = (col + (row * width)) * 4;
+                // r
+                imageData.data[i] = val;
+                // g
+                imageData.data[++i] = 0;
+                // b
+                imageData.data[++i] = 0;
+                // a
+                imageData.data[++i] = val === 0 ? 0 : 128;
+            }
+        }
+        context.putImageData(imageData, x, y);
+    }
+};
+MY2D.OccupancyGridU.prototype.__proto__ = createjs.Bitmap.prototype;
+
+/**
+ * A map that listens to a given occupancy grid topic.
+ *
+ * Emits the following events:
+ *   * 'change' - there was an update or change in the map
+ *
+ * @constructor
+ * @param options - object with following keys:
+ *   * ros - the ROSLIB.Ros connection handle
+ *   * topic (optional) - the map topic to listen to
+ *   * update_topic (optional) - the map_updates topic to listen to
+ *   * rootObject (optional) - the root object to add this marker to
+ *   * continuous (optional) - if the map should be continuously loaded (e.g., for SLAM)
+ */
+MY2D.OccupancyGridClientU = function (options) {
+    const that = this;
+    options = options || {};
+    const ros = options.ros;
+    const topic = options.topic || '/costmap';
+    const update_topic = options.update_topic || topic + '_updates';
+    this.rootObject = options.rootObject || new createjs.Container();
+
+    // current grid that is displayed
+    // create an empty shape to start with, so that the order remains correct.
+    this.currentGrid = new createjs.Shape();
+    this.rootObject.addChild(this.currentGrid);
+    // work-around for a bug in easeljs -- needs a second object to render correctly
+    this.rootObject.addChild(new ROS2D.Grid({size: 1}));
+
+    // subscribe to the topic
+    const rosTopic = new ROSLIB.Topic({
+        ros: ros, name: topic, messageType: 'nav_msgs/OccupancyGrid', compression: 'png'
+    });
+
+    const updateTopic = new ROSLIB.Topic({
+        ros: ros, name: update_topic, messageType: 'map_msgs/OccupancyGridUpdate'  // , compression: 'png'
+    });
+    rosTopic.subscribe(function (message) {
+        that.currentGrid = new MY2D.OccupancyGridU({
+            message: message
+        });
+        that.rootObject.addChild(that.currentGrid);
+
+        that.emit('change');
+
+        rosTopic.unsubscribe();
+
+        updateTopic.subscribe(function (msg) {
+            that.currentGrid.update(msg)
+        })
+    })
+}
+MY2D.OccupancyGridClientU.prototype.__proto__ = EventEmitter2.prototype;
 
 
 class App {
@@ -290,11 +528,8 @@ class App {
             ros: this.ros, rootObject: this.viewer.scene, continuous: false
         });
 
-        this.costmap_client = new ROS2D.OccupancyGridClient({
-            ros: this.ros,
-            rootObject: this.viewer.scene,
-            continuous: true,
-            topic: '/move_base/local_costmap/costmap'
+        this.costmap_client = new MY2D.OccupancyGridClientU({
+            ros: this.ros, rootObject: this.viewer.scene, continuous: true, topic: '/move_base/local_costmap/costmap'
         });
 
         // Scale the canvas to fit to the map
