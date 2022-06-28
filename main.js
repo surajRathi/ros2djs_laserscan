@@ -69,7 +69,11 @@ class App {
 
         // Set up the map client.
         this.map_client = new ROS2D.OccupancyGridClient({
-            ros: this.ros, rootObject: this.viewer.scene
+            ros: this.ros, rootObject: this.viewer.scene, continuous: false
+        });
+
+        this.costmap_client = new ROS2D.OccupancyGridClient({
+            ros: this.ros, rootObject: this.viewer.scene, continuous: true, topic: '/move_base/local_costmap/costmap_updates'
         });
 
         // Scale the canvas to fit to the map
