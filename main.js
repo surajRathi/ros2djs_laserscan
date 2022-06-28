@@ -80,22 +80,13 @@ class App {
 
 
 class LaserScanRenderer {
-    app
-    topic
-
-    marker_radius
-    marker_stroke_color
-    marker_fill_color
-
-    listener
-    prev_markers
+    prev_markers = null
 
     constructor(options) {
         options = options || {}
         this.app = options.app
         this.topic = options.topic || "/scan"
         this.marker_radius = options.marker_radius || 0.025
-        this.marker_stroke_color = options.marker_stroke_color || createjs.Graphics.getRGB(255, 0, 0, 0.5)
         this.marker_fill_color = options.marker_fill_color || createjs.Graphics.getRGB(255, 0, 0, 1.0)
 
         this.listener = new ROSLIB.Topic({
@@ -133,12 +124,10 @@ class LaserScanRenderer {
         // Init the graphics component
         const scan_markers = new createjs.Container();
 
-        const graphics = new createjs.Graphics();
-        // graphics.beginStroke(this.marker_stroke_color);
-        graphics.beginFill(this.marker_fill_color);
-        graphics.drawCircle(0, 0, this.marker_radius)
-        graphics.endFill();
-        // graphics.endStroke();
+        const graphics = new createjs.Graphics()
+            .beginFill(this.marker_fill_color)
+            .drawCircle(0, 0, this.marker_radius)
+            .endFill();
 
         // Transform each point and add it to the graphics
         poses_2d.forEach(pt => {
@@ -157,8 +146,6 @@ class LaserScanRenderer {
             marker.x = pose.position.x;
             marker.y = -pose.position.y;
             marker.rotation = this.app.viewer.scene.rosQuaternionToGlobalTheta(pose.orientation);
-            // marker.scaleX = 1.0 / this.app.viewer.scene.scaleX;
-            // marker.scaleY = 1.0 / this.app.viewer.scene.scaleY;
 
             scan_markers.addChild(marker)
         })
@@ -183,7 +170,6 @@ class PathRenderer {
         this.alive_timeout = options.alive_timeout || 0.5 * 1000  // Set this to the interval for path publishing (ms)
         this.marker_radius = options.marker_radius || 0.02
         this.marker_min_dist = options.marker_min_dist || 0.1
-        this.marker_stroke_color = options.marker_stroke_color || createjs.Graphics.getRGB(0, 0, 255, 0.5)
         this.marker_fill_color = options.marker_fill_color || createjs.Graphics.getRGB(0, 0, 255, 1.0)
 
         this.listener = new ROSLIB.Topic({
@@ -206,11 +192,9 @@ class PathRenderer {
         const path_markers = new createjs.Container();
 
         const graphics = new createjs.Graphics();
-        // graphics.beginStroke(this.marker_stroke_color);
         graphics.beginFill(this.marker_fill_color);
         graphics.drawCircle(0, 0, this.marker_radius)
         graphics.endFill();
-        // graphics.endStroke();
 
         let prev_pose = null;
         // Transform each point and add it to the graphics
@@ -227,8 +211,6 @@ class PathRenderer {
             marker.x = pose.pose.position.x;
             marker.y = -pose.pose.position.y;
             marker.rotation = this.app.viewer.scene.rosQuaternionToGlobalTheta(pose.pose.orientation);
-            // marker.scaleX = 1.0 / this.app.viewer.scene.scaleX;
-            // marker.scaleY = 1.0 / this.app.viewer.scene.scaleY;
 
             path_markers.addChild(marker)
 
@@ -310,15 +292,12 @@ class PoseRenderer {
 
     callback(msg) {
         const pose = msg.pose
-        console.log(pose)
 
         const marker = new createjs.Shape()
         marker.graphics.beginFill(this.marker_fill_color).drawPolyStar(0, 0, this.marker_size, 3, 0, Math.PI)
         marker.x = pose.pose.position.x;
         marker.y = -pose.pose.position.y;
         marker.rotation = this.app.viewer.scene.rosQuaternionToGlobalTheta(pose.pose.orientation);
-        // marker.scaleX = 1.0 / this.app.viewer.scene.scaleX;
-        // marker.scaleY = 1.0 / this.app.viewer.scene.scaleY;
 
 
         // TODO: Just update the old one, dont make new ones everytime
