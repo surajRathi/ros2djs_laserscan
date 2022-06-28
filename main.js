@@ -87,7 +87,7 @@ class LaserScanRenderer {
         this.app = options.app
         this.topic = options.topic || "/scan"
         this.marker_radius = options.marker_radius || 0.025
-        this.marker_fill_color = options.marker_fill_color || createjs.Graphics.getRGB(255, 0, 0, 1.0)
+        this.marker_fill_color = options.marker_fill_color || createjs.Graphics.getRGB(0, 255, 0, 1.0)
 
         this.listener = new ROSLIB.Topic({
             ros: this.app.ros, name: this.topic, messageType: 'sensor_msgs/LaserScan'
@@ -237,7 +237,7 @@ class GoalPoseRenderer {
         this.app = options.app
         this.topic = options.topic || "/move_base/goal"
         this.marker_size = options.marker_size || 0.1
-        this.marker_fill_color = options.marker_fill_color || createjs.Graphics.getRGB(0, 255, 0, 1.0)
+        this.marker_fill_color = options.marker_fill_color || createjs.Graphics.getRGB(255, 165, 0, 1.0)
 
         this.listener = new ROSLIB.Topic({
             ros: this.app.ros, name: this.topic, messageType: 'move_base_msgs/MoveBaseActionGoal'
