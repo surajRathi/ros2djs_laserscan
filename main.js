@@ -10,21 +10,15 @@ ros.on('close', () => console.log('Connection to websocket server closed.'));
 
 
 class App {
-    ros
     ground_frame = "map"
     width = 720
     height = 655
     scale_factor = 1.0
 
-    tf_client
     base_footprint_tf = null
 
     div_el_id = 'nav'
-    div_el
 
-    viewer
-    zoom_view
-    map_client
 
     constructor(ros) {
         this.ros = ros
@@ -73,7 +67,10 @@ class App {
         });
 
         this.costmap_client = new ROS2D.OccupancyGridClient({
-            ros: this.ros, rootObject: this.viewer.scene, continuous: true, topic: '/move_base/local_costmap/costmap_updates'
+            ros: this.ros,
+            rootObject: this.viewer.scene,
+            continuous: true,
+            topic: '/move_base/local_costmap/costmap_updates'
         });
 
         // Scale the canvas to fit to the map
@@ -193,7 +190,7 @@ class PathRenderer {
         this.app = options.app
         this.topic = options.topic || "/move_base/NavfnROS/plan"
         this.marker_radius = options.marker_radius || 4
-        this.marker_min_dist = options.marker_min_dist || 0.5
+        this.marker_min_dist = options.marker_min_dist || 0.1
         this.marker_stroke_color = options.marker_stroke_color || createjs.Graphics.getRGB(0, 0, 255, 0.5)
         this.marker_fill_color = options.marker_fill_color || createjs.Graphics.getRGB(0, 0, 255, 1.0)
 
