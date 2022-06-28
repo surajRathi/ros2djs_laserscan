@@ -41,9 +41,6 @@ class App {
             rootObject: this.viewer.scene
         })
         this.zoom_view.startZoom(this.width / 2, this.height / 2)
-        // Dunno why this is required
-        // Please don't zoom until this timeout occurs
-        setTimeout(() => this.zoom_view.startZoom(this.width / 2, this.height / 2), 1000)
 
         // Setup zoom and pan hooks
         // TODO: Check out PanView
@@ -59,6 +56,12 @@ class App {
                 this.zoom_view.startZoom(this.width / 2, this.height / 2)
             }
         })
+
+        // Set initial pan
+        setTimeout(() => {
+            this.viewer.shift(-this.width / 2 / this.viewer.scene.scaleX, -this.height / 2 / this.viewer.scene.scaleY)
+            this.zoom_view.startZoom(this.width / 2, this.height / 2)
+        }, 100)
 
 
         // Set up the map client.
