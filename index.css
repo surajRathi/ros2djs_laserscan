@@ -1,0 +1,21 @@
+body {
+    font-family: monospace;
+    color: #E4E7DB;
+    background-color: #1F2933;
+}
+
+#main_div {
+    width: fit-content;
+    padding: 10px;
+
+}
+
+#nav {
+    margin: 10px;
+    border: 10px solid #CBD2D9;
+}
+
+h1 {
+    color: #CBD2D9;
+    text-align: center;
+}
