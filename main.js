@@ -200,6 +200,7 @@ class PathRenderer {
         // Transform each point and add it to the graphics
         msg.poses.forEach(pose => {
             if (prev_pose !== null) {
+                // TODO: 'bucket' the path or only sample on a fixed set of x values to stop it from looking like a shifting mess
                 const distsq = Math.pow(pose.pose.position.x - prev_pose.pose.position.x, 2) + Math.pow(pose.pose.position.y - prev_pose.pose.position.y, 2) + Math.pow(pose.pose.position.z - prev_pose.pose.position.z, 2)
                 if (distsq < this.marker_min_dist * this.marker_min_dist) {
                     return
