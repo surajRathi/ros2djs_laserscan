@@ -155,7 +155,9 @@ const MY2D = {}
 MY2D.OccupancyGridU = function (options) {
     options = options || {};
     const message = options.message;
-
+    const r = options.color.r || 1.0
+    const g = options.color.g || 0.0
+    const b = options.color.b || 0.0
     // internal drawing canvas
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
@@ -193,11 +195,11 @@ MY2D.OccupancyGridU = function (options) {
 
 
             // r
-            imageData.data[i] = val;
+            imageData.data[i] = val * r;
             // g
-            imageData.data[++i] = 0;
+            imageData.data[++i] = val * g;
             // b
-            imageData.data[++i] = 0;
+            imageData.data[++i] = val * b;
             // a
             imageData.data[++i] = val === 0 ? 0 : 128;
         }
@@ -222,10 +224,9 @@ MY2D.OccupancyGridU = function (options) {
     const that = this;
 
     this.update = function (msg) {
-        console.log(msg.header.seq)
+        // console.log(msg.header.seq)  // TODO: Check for dropped sequence
         const x = msg.x, y = msg.y, width = msg.width, height = msg.height;
         const mdata = msg.data;
-        console.log(msg, Math.max(...mdata))
 
         const imageData = context.createImageData(width, height);
         for (let row = 0; row < height; row++) {
@@ -248,11 +249,11 @@ MY2D.OccupancyGridU = function (options) {
 
 
                 // r
-                imageData.data[i] = val;
+                imageData.data[i] = val * r;
                 // g
-                imageData.data[++i] = 0;
+                imageData.data[++i] = val * g;
                 // b
-                imageData.data[++i] = 0;
+                imageData.data[++i] = val * b;
                 // a
                 imageData.data[++i] = val === 0 ? 0 : 128;
             }
@@ -282,6 +283,7 @@ MY2D.OccupancyGridClientU = function (options) {
     const ros = options.ros;
     const topic = options.topic || '/costmap';
     const update_topic = options.update_topic || topic + '_updates';
+    const color = options.color || {}
     this.rootObject = options.rootObject || new createjs.Container();
 
     // current grid that is displayed
@@ -309,7 +311,8 @@ MY2D.OccupancyGridClientU = function (options) {
         }
 
         that.currentGrid = new MY2D.OccupancyGridU({
-            message: message
+            message: message,
+            color: color
         });
         if (index !== null) {
             that.rootObject.addChildAt(that.currentGrid, index);
@@ -390,7 +393,14 @@ class App {
         });
 
         this.costmap_client = new MY2D.OccupancyGridClientU({
-            ros: this.ros, rootObject: this.viewer.scene, continuous: true, topic: '/move_base/local_costmap/costmap'
+            ros: this.ros, rootObject: this.viewer.scene, continuous: true, topic: '/move_base/local_costmap/costmap',
+            color: {r: 1.0, b: 0.0}
+        });
+
+
+        this.global_costmap_client = new MY2D.OccupancyGridClientU({
+            ros: this.ros, rootObject: this.viewer.scene, continuous: true, topic: '/move_base/global_costmap/costmap',
+            color: {r: 0.0, b: 1.0}
         });
 
         // Scale the canvas to fit to the map
