@@ -11,8 +11,8 @@ ros.on('close', () => console.log('Connection to websocket server closed.'));
 
 ROS2D.ImageMap = function (options) {
     options = options || {};
-    var message = options.message;
-    var image = options.image;
+    const message = options.message;
+    const image = options.image;
 
     // save the metadata we need
     this.pose = new ROSLIB.Pose({
@@ -55,10 +55,10 @@ ROS2D.ImageMap.prototype.__proto__ = createjs.Bitmap.prototype;
  *   * rootObject (optional) - the root object to add this marker to
  */
 ROS2D.ImageMapClient = function (options) {
-    var that = this;
+    const that = this;
     options = options || {};
-    var ros = options.ros;
-    var topic = options.topic || '/map_metadata';
+    const ros = options.ros;
+    const topic = options.topic || '/map_metadata';
     this.image = options.image;
     this.rootObject = options.rootObject || new createjs.Container();
 
@@ -66,7 +66,7 @@ ROS2D.ImageMapClient = function (options) {
     this.currentImage = new createjs.Shape();
 
     // subscribe to the topic
-    var rosTopic = new ROSLIB.Topic({
+    const rosTopic = new ROSLIB.Topic({
         ros: ros,
         name: topic,
         messageType: 'nav_msgs/MapMetaData'
@@ -99,11 +99,11 @@ ROS2D.ImageMapClient.prototype.__proto__ = EventEmitter2.prototype;
  */
 ROS2D.OccupancyGrid = function (options) {
     options = options || {};
-    var message = options.message;
+    const message = options.message;
 
     // internal drawing canvas
-    var canvas = document.createElement('canvas');
-    var context = canvas.getContext('2d');
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
 
     // save the metadata we need
     this.pose = new ROSLIB.Pose({
@@ -117,14 +117,14 @@ ROS2D.OccupancyGrid = function (options) {
     canvas.width = this.width;
     canvas.height = this.height;
 
-    var imageData = context.createImageData(this.width, this.height);
-    for (var row = 0; row < this.height; row++) {
-        for (var col = 0; col < this.width; col++) {
+    const imageData = context.createImageData(this.width, this.height);
+    for (let row = 0; row < this.height; row++) {
+        for (let col = 0; col < this.width; col++) {
             // determine the index into the map data
-            var mapI = col + ((this.height - row - 1) * this.width);
+            const mapI = col + ((this.height - row - 1) * this.width);
             // determine the value
-            var data = message.data[mapI];
-            var val;
+            const data = message.data[mapI];
+            let val;
             if (data === 100) {
                 val = 0;
             } else if (data === 0) {
@@ -134,7 +134,7 @@ ROS2D.OccupancyGrid = function (options) {
             }
 
             // determine the index into the image data array
-            var i = (col + (row * this.width)) * 4;
+            let i = (col + (row * this.width)) * 4;
             // r
             imageData.data[i] = val;
             // g
@@ -178,10 +178,10 @@ ROS2D.OccupancyGrid.prototype.__proto__ = createjs.Bitmap.prototype;
  *   * continuous (optional) - if the map should be continuously loaded (e.g., for SLAM)
  */
 ROS2D.OccupancyGridClient = function (options) {
-    var that = this;
+    const that = this;
     options = options || {};
-    var ros = options.ros;
-    var topic = options.topic || '/map';
+    const ros = options.ros;
+    const topic = options.topic || '/map';
     this.continuous = options.continuous;
     this.rootObject = options.rootObject || new createjs.Container();
 
@@ -193,7 +193,7 @@ ROS2D.OccupancyGridClient = function (options) {
     this.rootObject.addChild(new ROS2D.Grid({size: 1}));
 
     // subscribe to the topic
-    var rosTopic = new ROSLIB.Topic({
+    const rosTopic = new ROSLIB.Topic({
         ros: ros,
         name: topic,
         messageType: 'nav_msgs/OccupancyGrid',
@@ -202,7 +202,7 @@ ROS2D.OccupancyGridClient = function (options) {
 
     rosTopic.subscribe(function (message) {
         // check for an old map
-        var index = null;
+        let index = null;
         if (that.currentGrid) {
             index = that.rootObject.getChildIndex(that.currentGrid);
             that.rootObject.removeChild(that.currentGrid);
