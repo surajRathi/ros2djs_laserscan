@@ -75,7 +75,7 @@ class App {
             ros: this.ros,
             rootObject: this.viewer.scene,
             continuous: true,
-            topic: '/move_base/local_costmap/costmap_updates'
+            topic: '/move_base/local_costmap/costmap'
         });
 
         // Scale the canvas to fit to the map
