@@ -94,7 +94,7 @@ class LaserScanRenderer {
         options = options || {}
         this.app = options.app
         this.topic = options.topic || "/scan"
-        this.marker_radius = options.marker_radius || 4
+        this.marker_radius = options.marker_radius || 0.025
         this.marker_stroke_color = options.marker_stroke_color || createjs.Graphics.getRGB(255, 0, 0, 0.5)
         this.marker_fill_color = options.marker_fill_color || createjs.Graphics.getRGB(255, 0, 0, 1.0)
 
@@ -134,11 +134,11 @@ class LaserScanRenderer {
         const scan_markers = new createjs.Container();
 
         const graphics = new createjs.Graphics();
-        graphics.beginStroke(this.marker_stroke_color);
+        // graphics.beginStroke(this.marker_stroke_color);
         graphics.beginFill(this.marker_fill_color);
         graphics.drawCircle(0, 0, this.marker_radius)
         graphics.endFill();
-        graphics.endStroke();
+        // graphics.endStroke();
 
         // Transform each point and add it to the graphics
         poses_2d.forEach(pt => {
@@ -157,8 +157,8 @@ class LaserScanRenderer {
             marker.x = pose.position.x;
             marker.y = -pose.position.y;
             marker.rotation = this.app.viewer.scene.rosQuaternionToGlobalTheta(pose.orientation);
-            marker.scaleX = 1.0 / this.app.viewer.scene.scaleX;
-            marker.scaleY = 1.0 / this.app.viewer.scene.scaleY;
+            // marker.scaleX = 1.0 / this.app.viewer.scene.scaleX;
+            // marker.scaleY = 1.0 / this.app.viewer.scene.scaleY;
 
             scan_markers.addChild(marker)
         })
@@ -173,23 +173,15 @@ class LaserScanRenderer {
 }
 
 class PathRenderer {
-    app
-    topic
-
-    marker_radius
-    marker_stroke_color
-    marker_fill_color
-
-    marker_min_dist
-
-    listener
-    prev_markers
+    prev_markers = null
+    timeout = null
 
     constructor(options) {
         options = options || {}
         this.app = options.app
         this.topic = options.topic || "/move_base/NavfnROS/plan"
-        this.marker_radius = options.marker_radius || 4
+        this.alive_timeout = options.alive_timeout || 0.5 * 1000  // Set this to the interval for path publishing (ms)
+        this.marker_radius = options.marker_radius || 0.02
         this.marker_min_dist = options.marker_min_dist || 0.1
         this.marker_stroke_color = options.marker_stroke_color || createjs.Graphics.getRGB(0, 0, 255, 0.5)
         this.marker_fill_color = options.marker_fill_color || createjs.Graphics.getRGB(0, 0, 255, 1.0)
@@ -205,18 +197,20 @@ class PathRenderer {
     }
 
     callback(msg) {
-
-        console.log(msg.poses.length)
+        if (this.timeout !== null) {
+            clearTimeout(this.timeout)
+            this.timeout = null
+        }
         // console.log(msg)
         // Init the graphics component
         const path_markers = new createjs.Container();
 
         const graphics = new createjs.Graphics();
-        graphics.beginStroke(this.marker_stroke_color);
+        // graphics.beginStroke(this.marker_stroke_color);
         graphics.beginFill(this.marker_fill_color);
         graphics.drawCircle(0, 0, this.marker_radius)
         graphics.endFill();
-        graphics.endStroke();
+        // graphics.endStroke();
 
         let prev_pose = null;
         // Transform each point and add it to the graphics
@@ -227,18 +221,16 @@ class PathRenderer {
                     return
                 }
             }
-            console.log("passed check")
 
             prev_pose = pose
             const marker = new createjs.Shape(graphics)
             marker.x = pose.pose.position.x;
             marker.y = -pose.pose.position.y;
             marker.rotation = this.app.viewer.scene.rosQuaternionToGlobalTheta(pose.pose.orientation);
-            marker.scaleX = 1.0 / this.app.viewer.scene.scaleX;
-            marker.scaleY = 1.0 / this.app.viewer.scene.scaleY;
+            // marker.scaleX = 1.0 / this.app.viewer.scene.scaleX;
+            // marker.scaleY = 1.0 / this.app.viewer.scene.scaleY;
 
             path_markers.addChild(marker)
-            console.log("done 1")
 
         })
 
@@ -247,6 +239,92 @@ class PathRenderer {
 
         this.app.viewer.addObject(path_markers)
         this.prev_markers = path_markers
+        this.alive = false
+        this.timeout = setTimeout(() => {
+            if (this.prev_markers !== null) this.app.viewer.scene.removeChild(this.prev_markers)
+        }, this.alive_timeout)
+    }
+
+}
+
+class GoalPoseRenderer {
+    prev_marker = null
+
+    constructor(options) {
+        options = options || {}
+        this.app = options.app
+        this.topic = options.topic || "/move_base/goal"
+        this.marker_size = options.marker_size || 0.1
+        this.marker_fill_color = options.marker_fill_color || createjs.Graphics.getRGB(0, 255, 0, 1.0)
+
+        this.listener = new ROSLIB.Topic({
+            ros: this.app.ros, name: this.topic, messageType: 'move_base_msgs/MoveBaseActionGoal'
+        });
+
+        this.prev_marker = null
+
+        this.listener.subscribe(this.callback.bind(this));
+
+    }
+
+    callback(msg) {
+        const pose = msg.goal.target_pose
+
+        const marker = new createjs.Shape()
+        marker.graphics.beginFill(this.marker_fill_color).drawPolyStar(0, 0, this.marker_size, 3, 0, Math.PI)
+        marker.x = pose.pose.position.x;
+        marker.y = -pose.pose.position.y;
+        marker.rotation = this.app.viewer.scene.rosQuaternionToGlobalTheta(pose.pose.orientation);
+        // marker.scaleX = 1.0 / this.app.viewer.scene.scaleX;
+        // marker.scaleY = 1.0 / this.app.viewer.scene.scaleY;
+
+
+        // TODO: Just update the old one, dont make new ones everytime
+        if (this.prev_marker !== null) this.app.viewer.scene.removeChild(this.prev_marker)
+        this.app.viewer.addObject(marker)
+        this.prev_marker = marker
+    }
+
+}
+
+
+class PoseRenderer {
+    prev_marker = null
+
+    constructor(options) {
+        options = options || {}
+        this.app = options.app
+        this.topic = options.topic || "/amcl_pose"
+        this.marker_size = options.marker_size || 0.1
+        this.marker_fill_color = options.marker_fill_color || createjs.Graphics.getRGB(255, 20, 20, 1.0)
+
+        this.listener = new ROSLIB.Topic({
+            ros: this.app.ros, name: this.topic, messageType: 'geometry_msgs/PoseWithCovarianceStamped'
+        });
+
+        this.prev_marker = null
+
+        this.listener.subscribe(this.callback.bind(this));
+
+    }
+
+    callback(msg) {
+        const pose = msg.pose
+        console.log(pose)
+
+        const marker = new createjs.Shape()
+        marker.graphics.beginFill(this.marker_fill_color).drawPolyStar(0, 0, this.marker_size, 3, 0, Math.PI)
+        marker.x = pose.pose.position.x;
+        marker.y = -pose.pose.position.y;
+        marker.rotation = this.app.viewer.scene.rosQuaternionToGlobalTheta(pose.pose.orientation);
+        // marker.scaleX = 1.0 / this.app.viewer.scene.scaleX;
+        // marker.scaleY = 1.0 / this.app.viewer.scene.scaleY;
+
+
+        // TODO: Just update the old one, dont make new ones everytime
+        if (this.prev_marker !== null) this.app.viewer.scene.removeChild(this.prev_marker)
+        this.app.viewer.addObject(marker)
+        this.prev_marker = marker
     }
 
 }
@@ -255,6 +333,8 @@ const app = new App(ros);
 
 const laser_scan = new LaserScanRenderer({app: app, topic: "/scan"})
 const global_path = new PathRenderer({app: app})
+const goal_pose = new GoalPoseRenderer({app: app})
+const pose = new PoseRenderer({app: app})
 
 
 document.addEventListener('DOMContentLoaded', app.init.bind(app), false);
