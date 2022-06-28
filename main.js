@@ -61,7 +61,7 @@ class App {
         setTimeout(() => {
             this.viewer.shift(-this.width / 2 / this.viewer.scene.scaleX, -this.height / 2 / this.viewer.scene.scaleY)
             this.zoom_view.startZoom(this.width / 2, this.height / 2)
-        }, 100)
+        }, 300)
 
 
         // Set up the map client.
