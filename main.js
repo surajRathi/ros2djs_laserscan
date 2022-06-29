@@ -192,7 +192,7 @@ MY2D.OccupancyGridU = function (options) {
 
 
         // r
-        imageData.data[i] = (255 -val) * r;
+        imageData.data[i] = (255 - val) * r;
         // g
         imageData.data[++i] = (255 - val) * g;
         // b
@@ -647,3 +647,7 @@ const pose = new PoseRenderer({app: app})
 
 
 document.addEventListener('DOMContentLoaded', app.init.bind(app), false);
+document.addEventListener('DOMContentLoaded', () => {
+    const fps_el = document.getElementById("fps_counter")
+    setInterval(() => fps_el.innerText = createjs.Ticker.getMeasuredFPS().toFixed(2), 1)
+}, false);
