@@ -60,7 +60,7 @@ ROS2D.OccupancyGrid = function (options) {
             // b
             imageData.data[++i] = val;
             // a
-            imageData.data[++i] = data === -1 ? 0 : 255;
+            imageData.data[++i] = data === -1 ? 128 : 255;
         }
     }
     context.putImageData(imageData, 0, 0);
@@ -192,11 +192,11 @@ MY2D.OccupancyGridU = function (options) {
 
 
         // r
-        imageData.data[i] = val * r;
+        imageData.data[i] = (255 -val) * r;
         // g
-        imageData.data[++i] = val * g;
+        imageData.data[++i] = (255 - val) * g;
         // b
-        imageData.data[++i] = val * b;
+        imageData.data[++i] = (255 - val) * b;
         // a
         imageData.data[++i] = (val === 0 ? 0 : 255) * a;
     }
@@ -415,7 +415,7 @@ class LaserScanRenderer {
         options = options || {}
         this.app = options.app
         this.topic = options.topic || "/scan"
-        this.marker_radius = options.marker_radius || 0.025
+        this.marker_radius = options.marker_radius || 0.015
         this.marker_fill_color = options.marker_fill_color || createjs.Graphics.getRGB(0, 255, 0, 1.0)
 
         this.listener = new ROSLIB.Topic({
