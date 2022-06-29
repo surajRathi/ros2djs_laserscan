@@ -166,7 +166,12 @@ MY2D.OccupancyGridU = function (options) {
     const a = options.color.a || 1.0
     // internal drawing canvas
     const canvas = document.createElement('canvas');
+    const canvas2 = document.createElement('canvas');
     const context = canvas.getContext('2d');
+    const context2 = canvas2.getContext('2d');
+    // context.imageSmoothingQuality = "high"  // This literally froze my pc
+    context2.imageSmoothingQuality = "high"
+
     // document.body.appendChild(canvas)
 
     // save the metadata we need
@@ -174,11 +179,14 @@ MY2D.OccupancyGridU = function (options) {
         position: message.info.origin.position, orientation: message.info.origin.orientation
     });
 
+    const scale = 128
     // set the size
     this.width = message.info.width;
     this.height = message.info.height;
     canvas.width = this.width;
     canvas.height = this.height;
+    canvas2.width = this.width * scale;
+    canvas2.height = this.height * scale;
 
     function set_color(data, imageData, i) {
         let val;
@@ -192,7 +200,7 @@ MY2D.OccupancyGridU = function (options) {
 
 
         // r
-        imageData.data[i] = (255 -val) * r;
+        imageData.data[i] = (255 - val) * r;
         // g
         imageData.data[++i] = (255 - val) * g;
         // b
@@ -216,15 +224,17 @@ MY2D.OccupancyGridU = function (options) {
         }
     }
     context.putImageData(imageData, 0, 0);
+    context2.clearRect(0, 0, canvas2.width, canvas2.height)
+    context2.drawImage(canvas, 0, 0, canvas2.width, canvas2.height)
 
     // create the bitmap
-    createjs.Bitmap.call(this, canvas);
+    createjs.Bitmap.call(this, canvas2);
     // change Y direction
     this.y = -this.height * message.info.resolution;
 
     // scale the image
-    this.scaleX = message.info.resolution;
-    this.scaleY = message.info.resolution;
+    this.scaleX = message.info.resolution / scale;
+    this.scaleY = message.info.resolution / scale;
     this.width *= this.scaleX;
     this.height *= this.scaleY;
 
@@ -252,6 +262,8 @@ MY2D.OccupancyGridU = function (options) {
             }
         }
         context.putImageData(imageData, x, y);
+        context2.clearRect(0, 0, canvas2.width, canvas2.height)
+        context2.drawImage(canvas, 0, 0, canvas2.width, canvas2.height)
     }
 };
 MY2D.OccupancyGridU.prototype.__proto__ = createjs.Bitmap.prototype;
