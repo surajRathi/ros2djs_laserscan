@@ -251,7 +251,7 @@ MY2D.OccupancyGridU = function (options) {
                 set_color(data, imageData, i);
             }
         }
-        context.putImageData(imageData, x, y);
+        context.putImageData(imageData, x, canvas.height - y - height);
     }
 };
 MY2D.OccupancyGridU.prototype.__proto__ = createjs.Bitmap.prototype;
