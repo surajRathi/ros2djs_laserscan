@@ -408,7 +408,7 @@ class LaserScanRenderer {
 
         this.prev_markers = null
 
-        this.listener.subscribe(this.callback.bind(this));
+        setTimeout(() => this.listener.subscribe(this.callback.bind(this)), 1000);
 
     }
 
@@ -650,6 +650,7 @@ MY2D.MapAsSVG = function (options) {
     this.msg = null
     this.svg_str = null
     this.url = null
+    this.index = null
     const update = () => {
         console.log("UPDATE")
         const msg = this.msg
@@ -662,10 +663,11 @@ MY2D.MapAsSVG = function (options) {
         this.height = msg.info.height;
 
         // create the bitmap
-
+        let index = null;
         let blob = new Blob([this.svg_str], {type: 'image/svg+xml'});
         if (this.url !== null) {
             URL.revokeObjectURL(this.url)
+            index = options.app.viewer.scene.getChildIndex(this)
             options.app.viewer.scene.removeChild(this)
         }
         this.url = URL.createObjectURL(blob);
@@ -686,7 +688,7 @@ MY2D.MapAsSVG = function (options) {
         // We want to only update when we have a fresh svg string
         this.svg_str = null
 
-        options.app.viewer.scene.addChild(this)
+        if (index !== null) options.app.viewer.scene.addChildAt(this, index); else options.app.viewer.scene.addChild(this);
 
     }
     cmap_topic.subscribe((msg) => {
