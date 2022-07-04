@@ -5,6 +5,7 @@ body {
 }
 
 #main_div {
+    /*width: 100%;*/
     width: fit-content;
     padding: 10px;
 

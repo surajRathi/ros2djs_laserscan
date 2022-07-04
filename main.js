@@ -157,6 +157,16 @@ class App {
 
     constructor(ros) {
         this.ros = ros
+
+        // Create the frontend
+        // console.log(this.div_el.clientWidth, this.div_el.clientHeight)
+        // const dw = this.div_el.getBoundingClientRect().width, dh = this.div_el.getBoundingClientRect().height
+        // const a = Math.min(dw, dh);
+        // const a =  this.div_el.clientWidth;
+        const a = 800;
+        // TODO: Get aspect ratio from the map itself
+        this.width = a
+        this.height = a
     }
 
     init() {
@@ -166,9 +176,8 @@ class App {
         })
         this.tf_client.subscribe('/base_footprint', transform => this.base_footprint_tf = transform)
 
-
-        // Create the frontend
         this.div_el = document.getElementById(this.div_el_id)
+
         this.viewer = new ROS2D.Viewer({
             divID: this.div_el_id, width: this.width, height: this.height
         });
