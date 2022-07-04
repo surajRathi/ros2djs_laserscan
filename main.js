@@ -385,23 +385,6 @@ class App {
         });
 
 
-        // this.global_costmap_client = new MY2D.OccupancyGridClientU({
-        //     ros: this.ros,
-        //     rootObject: this.viewer.scene,
-        //     continuous: true,
-        //     topic: '/move_base/global_costmap/costmap',
-        //     color: {b: 1.0, a: 0.2}
-        // });
-
-        this.costmap_client = new MY2D.OccupancyGridClientU({
-            ros: this.ros,
-            rootObject: this.viewer.scene,
-            continuous: true,
-            topic: '/move_base/local_costmap/costmap',
-            color: {r: 1.0, a: 0.5}
-        });
-
-
         // Scale the canvas to fit to the map
         this.map_client.on('change', () => this.viewer.scaleToDimensions(this.map_client.currentGrid.width, this.map_client.currentGrid.height));
         // this.global_costmap_client.on('change', () => this.viewer.scaleToDimensions(this.global_costmap_client.currentGrid.width, this.global_costmap_client.currentGrid.height));
@@ -729,7 +712,8 @@ const laser_scan = new LaserScanRenderer({app: app, topic: "/scan"})
 const global_path = new PathRenderer({app: app})
 const goal_pose = new GoalPoseRenderer({app: app})
 const pose = new PoseRenderer({app: app})
-const svg_render = new MY2D.MapAsSVG({app: app})
+const global_svg_render = new MY2D.MapAsSVG({app: app, topic: '/move_base/global_costmap/costmap'})
+const svg_render = new MY2D.MapAsSVG({app: app, topic: '/move_base/local_costmap/costmap'})
 
 document.addEventListener('DOMContentLoaded', app.init.bind(app), false);
 document.addEventListener('DOMContentLoaded', () => {
