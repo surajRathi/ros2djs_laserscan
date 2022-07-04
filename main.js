@@ -385,13 +385,13 @@ class App {
         });
 
 
-        this.global_costmap_client = new MY2D.OccupancyGridClientU({
-            ros: this.ros,
-            rootObject: this.viewer.scene,
-            continuous: true,
-            topic: '/move_base/global_costmap/costmap',
-            color: {b: 1.0, a: 0.2}
-        });
+        // this.global_costmap_client = new MY2D.OccupancyGridClientU({
+        //     ros: this.ros,
+        //     rootObject: this.viewer.scene,
+        //     continuous: true,
+        //     topic: '/move_base/global_costmap/costmap',
+        //     color: {b: 1.0, a: 0.2}
+        // });
 
         this.costmap_client = new MY2D.OccupancyGridClientU({
             ros: this.ros,
@@ -670,7 +670,6 @@ MY2D.MapAsSVG = function (options) {
     const update = () => {
         console.log("UPDATE")
         const msg = this.msg
-        console.log("got cmap")
         this.pose = new ROSLIB.Pose({
             position: msg.info.origin.position, orientation: msg.info.origin.orientation
         });
@@ -682,7 +681,10 @@ MY2D.MapAsSVG = function (options) {
         // create the bitmap
 
         let blob = new Blob([this.svg_str], {type: 'image/svg+xml'});
-        if (this.url !== null) URL.revokeObjectURL(this.url)
+        if (this.url !== null) {
+            URL.revokeObjectURL(this.url)
+            options.app.viewer.scene.removeChild(this)
+        }
         this.url = URL.createObjectURL(blob);
         let image = document.createElement('img');
         image.src = this.url;
@@ -698,8 +700,7 @@ MY2D.MapAsSVG = function (options) {
         this.x += this.pose.position.x;
         this.y -= this.pose.position.y;
 
-
-        this.msg = null
+        // We want to only update when we have a fresh svg string
         this.svg_str = null
 
         options.app.viewer.scene.addChild(this)
