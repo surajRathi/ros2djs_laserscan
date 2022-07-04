@@ -404,6 +404,7 @@ class App {
 
         // Scale the canvas to fit to the map
         this.map_client.on('change', () => this.viewer.scaleToDimensions(this.map_client.currentGrid.width, this.map_client.currentGrid.height));
+        // this.global_costmap_client.on('change', () => this.viewer.scaleToDimensions(this.global_costmap_client.currentGrid.width, this.global_costmap_client.currentGrid.height));
     }
 }
 
@@ -638,13 +639,96 @@ class PoseRenderer {
 
 }
 
+
+/**
+ * An OccupancyGrid can convert a ROS occupancy grid message into a createjs Bitmap object.
+ *
+ * @constructor
+ * @param options - object with following keys:
+ *   * message - the occupancy grid message
+ *   * color - object with following keys:
+ *     * r - scaling factor for the red component
+ *     * g - scaling factor for the green component
+ *     * b - scaling factor for the blue component
+ *     * a - scaling factor for the alpha component
+ */
+MY2D.MapAsSVG = function (options) {
+    options = options || {};
+    const app = options.app
+    const topic = options.topic || '/move_base/global_costmap/costmap'
+    // subscribe to the topic
+    const svg_topic = new ROSLIB.Topic({
+        ros: ros, name: topic + '_svg', messageType: 'std_msgs/String'
+    });
+    const cmap_topic = new ROSLIB.Topic({
+        ros: ros, name: topic, messageType: 'nav_msgs/OccupancyGrid'
+    });
+    this.pose = new ROSLIB.Pose({});
+    this.msg = null
+    this.svg_str = null
+    this.url = null
+    const update = () => {
+        console.log("UPDATE")
+        const msg = this.msg
+        console.log("got cmap")
+        this.pose = new ROSLIB.Pose({
+            position: msg.info.origin.position, orientation: msg.info.origin.orientation
+        });
+
+        // set the size
+        this.width = msg.info.width;
+        this.height = msg.info.height;
+
+        // create the bitmap
+
+        let blob = new Blob([this.svg_str], {type: 'image/svg+xml'});
+        if (this.url !== null) URL.revokeObjectURL(this.url)
+        this.url = URL.createObjectURL(blob);
+        let image = document.createElement('img');
+        image.src = this.url;
+        createjs.Bitmap.call(this, image);
+
+        // scale the image
+        this.scaleX = msg.info.resolution;
+        this.scaleY = -msg.info.resolution;
+        this.width *= this.scaleX;
+        this.height *= this.scaleY;
+
+        // set the pose
+        this.x += this.pose.position.x;
+        this.y -= this.pose.position.y;
+
+
+        this.msg = null
+        this.svg_str = null
+
+        options.app.viewer.scene.addChild(this)
+
+    }
+    cmap_topic.subscribe((msg) => {
+        this.msg = msg
+        console.log("got cmap")
+        if ((this.msg !== null) && (this.svg_str !== null)) update()
+    })
+
+    svg_topic.subscribe((msg) => {
+        this.svg_str = msg.data
+        console.log("got svg")
+        if ((this.msg !== null) && (this.svg_str !== null)) update()
+
+    })
+
+};
+MY2D.MapAsSVG.prototype.__proto__ = createjs.Bitmap.prototype;
+
+
 const app = new App(ros);
 
 const laser_scan = new LaserScanRenderer({app: app, topic: "/scan"})
 const global_path = new PathRenderer({app: app})
 const goal_pose = new GoalPoseRenderer({app: app})
 const pose = new PoseRenderer({app: app})
-
+const svg_render = new MY2D.MapAsSVG({app: app})
 
 document.addEventListener('DOMContentLoaded', app.init.bind(app), false);
 document.addEventListener('DOMContentLoaded', () => {
