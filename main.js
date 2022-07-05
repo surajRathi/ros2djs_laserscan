@@ -544,8 +544,8 @@ const laser_scan = new LaserScanRenderer({app: app, topic: "/scan"})
 const global_path = new PathRenderer({app: app})
 const goal_pose = new GoalPoseRenderer({app: app})
 const pose = new PoseRenderer({app: app})
-const global_svg_render = new MY2D.MapAsSVG({app: app, topic: '/move_base/global_costmap/costmap'})
-const svg_render = new MY2D.MapAsSVG({app: app, topic: '/move_base/local_costmap/costmap'})
+const map_svg_render = new MY2D.MapAsSVG({app: app, topic: '/map'})
+const local_costmap_svg_render = new MY2D.MapAsSVG({app: app, topic: '/move_base/local_costmap/costmap'})
 
 document.addEventListener('DOMContentLoaded', app.init.bind(app), false);
 document.addEventListener('DOMContentLoaded', () => {
