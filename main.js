@@ -216,7 +216,11 @@ class App {
         });
 
         // Scale the canvas to fit to the map
-        this.map_client.on('change', () => this.viewer.scaleToDimensions(this.map_client.currentGrid.width, this.map_client.currentGrid.height));
+        this.map_client.on('change', () => {
+            this.viewer.scaleToDimensions(this.map_client.currentGrid.width, this.map_client.currentGrid.height)
+            this.viewer.scene.removeChild(this.map_client.currentGrid)
+        });
+
     }
 }
 
@@ -518,7 +522,7 @@ MY2D.MapAsSVG = function (options) {
         // We want to only update when we have a fresh svg string
         this.svg_str = null
 
-        if (index !== null) options.app.viewer.scene.addChildAt(this, index); else options.app.viewer.scene.addChild(this);
+        if (index !== null) app.viewer.scene.addChildAt(this, index); else app.viewer.scene.addChild(this);
 
     }
     cmap_topic.subscribe((msg) => {
