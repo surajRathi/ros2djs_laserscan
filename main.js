@@ -179,7 +179,7 @@ class App {
         this.div_el = document.getElementById(this.div_el_id)
 
         this.viewer = new ROS2D.Viewer({
-            divID: this.div_el_id, width: this.width, height: this.height
+            divID: this.div_el_id, width: this.width, height: this.height, background: '#AAAAAA'
         });
         this.viewer.scene.stage.canvas.getContext("2d").imageSmoothingEnabled = false
 
