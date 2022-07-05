@@ -228,7 +228,7 @@ class LaserScanRenderer {
         options = options || {}
         this.app = options.app
         this.topic = options.topic || "/scan"
-        this.marker_radius = options.marker_radius || 0.015
+        this.marker_radius = options.marker_radius || 0.03
         this.marker_fill_color = options.marker_fill_color || createjs.Graphics.getRGB(0, 255, 0, 1.0)
 
         this.listener = new ROSLIB.Topic({
@@ -468,6 +468,7 @@ MY2D.MapAsSVG = function (options) {
     options = options || {};
     const app = options.app
     const topic = options.topic || '/move_base/global_costmap/costmap'
+    const debug = options.debug || false
     // subscribe to the topic
     const svg_topic = new ROSLIB.Topic({
         ros: ros, name: topic + '_svg', messageType: 'std_msgs/String'
@@ -481,7 +482,7 @@ MY2D.MapAsSVG = function (options) {
     this.url = null
     this.index = null
     const update = () => {
-        // console.log("UPDATE")
+        if (debug) console.log("UPDATE")
         const msg = this.msg
         this.pose = new ROSLIB.Pose({
             position: msg.info.origin.position, orientation: msg.info.origin.orientation
@@ -522,13 +523,13 @@ MY2D.MapAsSVG = function (options) {
     }
     cmap_topic.subscribe((msg) => {
         this.msg = msg
-        // console.log("got cmap")
+        if (debug) console.log("got cmap")
         if ((this.msg !== null) && (this.svg_str !== null)) update()
     })
 
     svg_topic.subscribe((msg) => {
         this.svg_str = msg.data
-        // console.log("got svg")
+        if (debug) console.log("got svg")
         if ((this.msg !== null) && (this.svg_str !== null)) update()
 
     })
