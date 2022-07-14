@@ -1,3 +1,4 @@
+var a;
 document.addEventListener('DOMContentLoaded', () => {
     const svg_el = document.getElementById('map_svg');
     // console.log(svg_el);
@@ -9,6 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log(svg);
 
         let selectedElement = false, offset, transform, bbox, minX, maxX, minY, maxY, confined;
+        let mode = "move";
+        document.getElementById('delete_el_button').onclick = () => mode = "delete";
 
         function getMousePosition(evt) {
             const CTM = svg.getScreenCTM();
@@ -22,8 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
         function startDrag(evt) {
-            if (evt.target.classList.contains('obstacles')) {
+            if (mode === 'delete' && evt.target.classList.contains('item')) {
+                console.log(evt.target, typeof evt.target);
+                selectedElement = evt.target
+            }
 
+            if (mode === "move" && evt.target.classList.contains('item')) {
                 selectedElement = evt.target;
                 offset = getMousePosition(evt);
 
@@ -32,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (transforms.length === 0 || transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
                     // Create an transform that translates by (0, 0)
-                    var translate = svg.createSVGTransform();
+                    const translate = svg.createSVGTransform();
                     translate.setTranslate(0, 0);
                     selectedElement.transform.baseVal.insertItemBefore(translate, 0);
                 }
@@ -54,8 +61,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         function drag(evt) {
+            if (mode === "delete" && selectedElement) return;
 
-            if (selectedElement) {
+            if (mode === "move" && selectedElement) {
                 evt.preventDefault();
 
                 var coord = getMousePosition(evt);
@@ -80,7 +88,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         function endDrag(evt) {
-            selectedElement = false;
+            if (mode === "delete") {
+                selectedElement.remove();
+                selectedElement = false;
+                mode = "move";
+            }
+
+            if (mode === "move") {
+                selectedElement = false;
+            }
         }
 
         svg.addEventListener('mousedown', startDrag);
