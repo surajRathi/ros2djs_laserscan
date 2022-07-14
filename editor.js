@@ -1,17 +1,23 @@
 var a;
 document.addEventListener('DOMContentLoaded', () => {
     const svg_el = document.getElementById('map_svg');
-    // console.log(svg_el);
     setTimeout(() => {
         const svg_doc = svg_el.getSVGDocument();
         const svg = svg_doc.getElementsByTagName('svg')[0];
-        // console.log(svg_doc);
-        console.log(svg_doc.getElementsByTagName('line'));
-        console.log(svg);
 
         let selectedElement = false, offset, transform, bbox, minX, maxX, minY, maxY, confined;
-        let mode = "move";
-        document.getElementById('delete_el_button').onclick = () => mode = "delete";
+
+        const mode_line_el = document.getElementById('mode_line')
+        let mode = {
+            m_: 10, set m(val) {
+                this.m_ = val;
+                mode_line_el.innerText = this.m_
+            }, get m() {
+                return this.m_;
+            }
+        }
+        mode.m = "move";
+        document.getElementById('delete_el_button').onclick = () => mode.m = "delete";
 
         function getMousePosition(evt) {
             const CTM = svg.getScreenCTM();
@@ -25,12 +31,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
         function startDrag(evt) {
-            if (mode === 'delete' && evt.target.classList.contains('item')) {
-                console.log(evt.target, typeof evt.target);
+            if (mode.m === 'delete' && evt.target.classList.contains('item')) {
                 selectedElement = evt.target
             }
 
-            if (mode === "move" && evt.target.classList.contains('item')) {
+            if (mode.m === "move" && evt.target.classList.contains('item')) {
                 selectedElement = evt.target;
                 offset = getMousePosition(evt);
 
@@ -61,9 +66,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         function drag(evt) {
-            if (mode === "delete" && selectedElement) return;
+            if (mode.m === "delete" && selectedElement) return;
 
-            if (mode === "move" && selectedElement) {
+            if (mode.m === "move" && selectedElement) {
                 evt.preventDefault();
 
                 var coord = getMousePosition(evt);
@@ -88,13 +93,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         function endDrag(evt) {
-            if (mode === "delete") {
+            if (mode.m === "delete") {
                 selectedElement.remove();
                 selectedElement = false;
-                mode = "move";
+                mode.m = "move";
             }
 
-            if (mode === "move") {
+            if (mode.m === "move") {
                 selectedElement = false;
             }
         }
