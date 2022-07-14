@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const svg_doc = svg_el.getSVGDocument();
         const svg = svg_doc.getElementsByTagName('svg')[0];
 
-        let selectedElement = false, offset, transform, bbox, minX, maxX, minY, maxY, confined;
+        let selectedElement = false, mouse_offset = null, transform = null;
 
         const mode_line_el = document.getElementById('mode_line')
         let mode = {
@@ -37,10 +37,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (mode.m === "move" && evt.target.classList.contains('item')) {
                 selectedElement = evt.target;
-                offset = getMousePosition(evt);
+                mouse_offset = getMousePosition(evt);
 
                 // Make sure the first transform on the element is a translate transform
-                const transforms = selectedElement.transform.baseVal;
+                transforms = selectedElement.transform.baseVal;
 
                 if (transforms.length === 0 || transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
                     // Create an transform that translates by (0, 0)
@@ -50,18 +50,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // Get initial translation
-                transform = transforms.getItem(0);
-                offset.x -= transform.matrix.e;
-                offset.y -= transform.matrix.f;
-
-                confined = evt.target.classList.contains('confine');
-                if (confined) {
-                    bbox = selectedElement.getBBox();
-                    minX = boundaryX1 - bbox.x;
-                    maxX = boundaryX2 - bbox.x - bbox.width;
-                    minY = boundaryY1 - bbox.y;
-                    maxY = boundaryY2 - bbox.y - bbox.height;
-                }
+                const transform = transforms.getItem(0);
+                mouse_offset.x -= transform.matrix.e;
+                mouse_offset.y -= transform.matrix.f;
             }
         }
 
@@ -72,21 +63,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 evt.preventDefault();
 
                 var coord = getMousePosition(evt);
-                var dx = coord.x - offset.x;
-                var dy = coord.y - offset.y;
-
-                if (confined) {
-                    if (dx < minX) {
-                        dx = minX;
-                    } else if (dx > maxX) {
-                        dx = maxX;
-                    }
-                    if (dy < minY) {
-                        dy = minY;
-                    } else if (dy > maxY) {
-                        dy = maxY;
-                    }
-                }
+                var dx = coord.x - mouse_offset.x;
+                var dy = coord.y - mouse_offset.y;
 
                 transform.setTranslate(dx, dy);
             }
