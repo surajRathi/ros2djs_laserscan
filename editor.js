@@ -210,6 +210,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.drag_create((mouse_pos))
                 this.p1 = {x: Math.min(mouse_pos.x, this.mouse_start.x), y: Math.min(mouse_pos.y, this.mouse_start.y)}
                 this.p2 = {x: Math.max(mouse_pos.x, this.mouse_start.x), y: Math.max(mouse_pos.y, this.mouse_start.y)}
+
+                // svg_doc.getElementsByClassName('item').forEach((el) => {
+                //     el.getBounds()
+                // })
             }
         }
 
@@ -218,7 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (mode.m === mode.NONE) {
                 console.log("none mode", mode.m)
-                if (evt.target.classList.contains('item')) selectedElement = evt.target
+                if (evt.target.classList.contains('item') || evt.target === multi_selector_mode.circle_) selectedElement = evt.target
             } else if (mode.m === mode.SELECTED) {
                 if (evt.target === select_mode.circle_) {
                     selectedElement = evt.target
@@ -254,7 +258,9 @@ document.addEventListener('DOMContentLoaded', () => {
         function endDrag(evt) {
             mouse_down = false;
             if (mode.m === mode.NONE) {
-                if (selectedElement !== null) {
+                if (selectedElement === multi_selector_mode.circle_) {
+                    if (evt.target === multi_selector_mode.circle_) multi_selector_mode.clear();
+                } else if (selectedElement !== null) {
                     mode.m = mode.SELECTED
                     select_mode.el = selectedElement;
                 }
