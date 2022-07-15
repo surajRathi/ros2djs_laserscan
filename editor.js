@@ -421,6 +421,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 select_mode.el = add_line_mode.line_
             } else if (mode.m === mode.ADD_RECT) {
                 add_rect_mode.endDrag(getMousePosition(evt))
+                add_rect_mode.clear()
+                mode.m = mode.NONE
             } else if (mode.m === mode.USE_MULTI_SELECTOR) {
                 if (evt.target === selectedElement) {
                     if (selectedElement === multi_line_selector_mode.circle_) {
