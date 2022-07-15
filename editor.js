@@ -47,10 +47,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let select_mode = {
             el_: null, bounding_box_: null, circle_: null, clear() {
                 this.el_ = null
-                if (this.bounding_box_ !== null)
-                    this.bounding_box_.remove()
-                if (this.circle_ !== null)
-                    this.circle_.remove()
+                if (this.bounding_box_ !== null) this.bounding_box_.remove()
+                if (this.circle_ !== null) this.circle_.remove()
 
             }, set el(val) {
                 console.log("Selected", val)
