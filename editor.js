@@ -35,7 +35,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let select_mode = {
             el_: null, bounding_box_: null, clear() {
-                console.log("Cleared", this.el_)
                 this.el_ = null
                 if (this.bounding_box_ !== null) {
                     this.bounding_box_.remove()
@@ -66,9 +65,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Get width and height
                 p2.x -= p1.x
                 p2.y -= p1.y
-                console.log(bb, p1, p2)
-                console.log(val)
-
 
                 const rect = svg_doc.createElementNS(svg.namespaceURI, "rect");
                 rect.setAttribute("x", p1.x.toString());
@@ -103,7 +99,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.mouse_offset_.x -= this.transform_.matrix.e;
                 this.mouse_offset_.y -= this.transform_.matrix.f;
             }, drag(mouse_pos) {
-                console.log("SELECTED: Move")
                 const dx = mouse_pos.x - this.mouse_offset_.x;
                 const dy = mouse_pos.y - this.mouse_offset_.y;
 
@@ -120,7 +115,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log("none mode", mode.m)
                 if (evt.target.classList.contains('item')) selectedElement = evt.target
             } else if (mode.m === mode.SELECTED) {
-                console.log("SELECTED: Down", evt.target.classList)
                 if (evt.target === select_mode.bounding_box_) {
                     selectedElement = evt.target
                     mouse_offset = getMousePosition(evt);
@@ -151,11 +145,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (mode.m === mode.NONE) {
                 if (selectedElement !== null) {
                     mode.m = mode.SELECTED
-                    console.log(selectedElement.getBoundingClientRect())
                     select_mode.el = selectedElement;
                 }
             } else if (mode.m === mode.SELECTED) {
-                console.log("SELECTED: up")
                 if (selectedElement !== null) {
                     select_mode.endDrag()
                     selectedElement = null;
