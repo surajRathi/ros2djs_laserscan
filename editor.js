@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const mode_line_el = document.getElementById('mode_line')
         let mode = {
-            NONE: 0, SELECTED: 1, DELETE: 2, MULTI_SELECTOR: 3, ADD_LINE: 4, ADD_RECT: 5,
+            NONE: 0, SELECTED: 1, DELETE: 2, CREATE_MULTI_SELECTOR: 3, ADD_LINE: 4, ADD_RECT: 5, USE_MULTI_SELECTOR: 6,
 
             m_: this.NONE, set m(val) {
                 this.m_ = val;
@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!mouse_down) mode.m = mode.DELETE;
         }
         document.getElementById('multi_selector_button').onclick = () => {
-            if (!mouse_down) mode.m = mode.MULTI_SELECTOR;
+            if (!mouse_down) mode.m = mode.CREATE_MULTI_SELECTOR;
         }
         document.getElementById('add_line_button').onclick = () => {
             if (!mouse_down) mode.m = mode.ADD_LINE;
@@ -168,10 +168,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         let multi_line_selector_mode = {
-            rect_: null, circle_: null, els_: [], clear() {
+            rect_: null, circle_: null, circle2_: null, els_: [], clear() {
                 if (this.rect_ !== null) {
                     this.rect_.remove()
                     this.circle_.remove()
+                    this.circle2_.remove()
+                }
+                for (const el of this.els_) {
+                    el.setAttribute('stroke', '#F00')
                 }
                 this.els_ = []
             }, start_create(mouse_pos) {
@@ -203,6 +207,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 svg.appendChild(circle);
                 this.circle_ = circle;
 
+                const circle2 = svg_doc.createElementNS(svg.namespaceURI, "circle");
+                circle2.setAttribute("cx", mouse_pos.x.toString());
+                circle2.setAttribute("cy", mouse_pos.y.toString());
+                circle2.setAttribute("r", "2");
+                circle2.setAttribute("fill", "#00F");
+                circle2.setAttribute("fill-opacity", "0.8");
+                circle2.classList.add("selector_joiner");
+
+                svg.appendChild(circle2);
+                this.circle2_ = circle2;
+
             }, drag_create(mouse_pos) {
                 this.rect_.setAttribute("x", (Math.min(mouse_pos.x, this.mouse_start.x)).toString());
                 this.rect_.setAttribute("y", (Math.min(mouse_pos.y, this.mouse_start.y)).toString());
@@ -211,14 +226,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 this.circle_.setAttribute('cx', (Math.max(mouse_pos.x, this.mouse_start.x)).toString())
                 this.circle_.setAttribute('cy', (Math.min(mouse_pos.y, this.mouse_start.y)).toString())
+
+                this.circle2_.setAttribute('cx', (Math.min(mouse_pos.x, this.mouse_start.x)).toString())
+                this.circle2_.setAttribute('cy', (Math.min(mouse_pos.y, this.mouse_start.y)).toString())
             }, end_create(mouse_pos) {
                 this.drag_create((mouse_pos))
-                this.p1 = {x: Math.min(mouse_pos.x, this.mouse_start.x), y: Math.min(mouse_pos.y, this.mouse_start.y)}
-                this.p2 = {x: Math.max(mouse_pos.x, this.mouse_start.x), y: Math.max(mouse_pos.y, this.mouse_start.y)}
+                const p1 = {x: Math.min(mouse_pos.x, this.mouse_start.x), y: Math.min(mouse_pos.y, this.mouse_start.y)}
+                const p2 = {x: Math.max(mouse_pos.x, this.mouse_start.x), y: Math.max(mouse_pos.y, this.mouse_start.y)}
 
-                // svg_doc.getElementsByClassName('item').forEach((el) => {
-                //     el.getBounds()
-                // })
+                for (const el of svg_doc.getElementsByClassName('item')) {
+                    if (el.tagName === 'line') {
+                        const x1 = el.getAttribute('x1')
+                        const x2 = el.getAttribute('x2')
+                        const y1 = el.getAttribute('y1')
+                        const y2 = el.getAttribute('y2')
+                        if ((p1.x <= x1) && (x1 <= p2.x) && (p1.x <= x2) && (x2 <= p2.x) && (p1.y <= y1) && (y1 <= p2.y) && (p1.y <= y2) && (y2 <= p2.y)) {
+                            this.els_.push(el)
+                            el.setAttribute('stroke', '#000')
+                        }
+                    }
+                }
+                console.log(this.els_)
+            }, delete_els() {
+                for (const el of this.els_) {
+                    el.remove()
+                }
+                this.els_ = []
             }
         }
 
@@ -289,21 +322,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log("none mode", mode.m)
                 if (evt.target.classList.contains('item') || evt.target === multi_line_selector_mode.circle_) selectedElement = evt.target
             } else if (mode.m === mode.SELECTED) {
-                if (evt.target === select_mode.circle_) {
-                    selectedElement = evt.target
-                } else if (evt.target === select_mode.bounding_box_) {
+                if (evt.target === select_mode.bounding_box_) {
                     selectedElement = evt.target
                     mouse_offset = getMousePosition(evt);
                     select_mode.startDrag(mouse_offset);
                 }
             } else if (mode.m === mode.DELETE) {
                 if (evt.target.classList.contains('item')) selectedElement = evt.target;
-            } else if (mode.m === mode.MULTI_SELECTOR) {
+            } else if (mode.m === mode.CREATE_MULTI_SELECTOR) {
                 multi_line_selector_mode.start_create(getMousePosition(evt))
             } else if (mode.m === mode.ADD_LINE) {
                 add_line_mode.startDrag(getMousePosition(evt))
             } else if (mode.m === mode.ADD_RECT) {
                 add_rect_mode.startDrag(getMousePosition(evt))
+            } else if (mode.m === mode.USE_MULTI_SELECTOR) {
+                if (evt.target === multi_line_selector_mode.circle_ || evt.target === multi_line_selector_mode.circle2_) {
+                    selectedElement = evt.target
+                }
             }
         }
 
@@ -318,7 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 } else if (mode.m === mode.DELETE) {
                     // NOP
-                } else if (mode.m === mode.MULTI_SELECTOR) {
+                } else if (mode.m === mode.CREATE_MULTI_SELECTOR) {
                     multi_line_selector_mode.drag_create(getMousePosition(evt))
                 } else if (mode.m === mode.ADD_LINE) {
                     add_line_mode.drag(getMousePosition(evt))
@@ -331,9 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
         function endDrag(evt) {
             mouse_down = false;
             if (mode.m === mode.NONE) {
-                if (selectedElement === multi_line_selector_mode.circle_) {
-                    if (evt.target === multi_line_selector_mode.circle_) multi_line_selector_mode.clear();
-                } else if (selectedElement !== null) {
+                if (selectedElement !== null) {
                     mode.m = mode.SELECTED
                     select_mode.el = selectedElement;
                 }
@@ -360,17 +393,32 @@ document.addEventListener('DOMContentLoaded', () => {
                     selectedElement = null;
                 }
                 mode.m = mode.NONE;
-            } else if (mode.m === mode.MULTI_SELECTOR) {
+            } else if (mode.m === mode.CREATE_MULTI_SELECTOR) {
                 multi_line_selector_mode.end_create(getMousePosition(evt))
-                mode.m = mode.NONE
+                mode.m = mode.USE_MULTI_SELECTOR
             } else if (mode.m === mode.ADD_LINE) {
                 add_line_mode.endDrag(getMousePosition(evt))
                 mode.m = mode.SELECTED
                 select_mode.el = add_line_mode.line_
             } else if (mode.m === mode.ADD_RECT) {
                 add_rect_mode.endDrag(getMousePosition(evt))
-                mode.m = mode.SELECTED
-                select_mode.el = add_rect_mode.rect_
+            } else if (mode.m === mode.USE_MULTI_SELECTOR) {
+                if (evt.target === selectedElement) {
+                    if (selectedElement === multi_line_selector_mode.circle_) {
+                        multi_line_selector_mode.delete_els()
+                        if (evt.target === multi_line_selector_mode.circle_) multi_line_selector_mode.clear();
+                        mode.m = mode.NONE
+                    } else if (selectedElement === multi_line_selector_mode.circle2_) {
+                        // do line join
+                    }
+                }
+                if (selectedElement == null && evt.target !== multi_line_selector_mode.rect_) {
+                    multi_line_selector_mode.clear()
+                    mode.m = mode.NONE
+                } else {
+                    console.log(selectedElement)
+                }
+                selectedElement = null
             }
         }
 
