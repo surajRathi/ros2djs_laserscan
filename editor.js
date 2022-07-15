@@ -86,43 +86,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
             }, get el() {
                 return this.el_;
+            }, startDrag(mouse_offset) {
+                this.mouse_offset_ = mouse_offset
+                // Make sure the first transform on the element is a translate transform
+                const transforms = this.bounding_box_.transform.baseVal;
+
+                if (transforms.length === 0 || transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
+                    // Create an transform that translates by (0, 0)
+                    const translate = svg.createSVGTransform();
+                    translate.setTranslate(0, 0);
+                    this.bounding_box_.transform.baseVal.insertItemBefore(translate, 0);
+                }
+
+                // Get initial translation
+                this.transform_ = transforms.getItem(0);
+                this.mouse_offset_.x -= this.transform_.matrix.e;
+                this.mouse_offset_.y -= this.transform_.matrix.f;
+            }, drag(mouse_pos) {
+                console.log("SELECTED: Move")
+                const dx = mouse_pos.x - this.mouse_offset_.x;
+                const dy = mouse_pos.y - this.mouse_offset_.y;
+
+                this.transform_.setTranslate(dx, dy);
+            }, endDrag() {
+                this.transform_ = null;
             }
         }
 
         function startDrag(evt) {
             mouse_down = true;
+
             if (mode.m === mode.NONE) {
                 console.log("none mode", mode.m)
                 if (evt.target.classList.contains('item')) selectedElement = evt.target
             } else if (mode.m === mode.SELECTED) {
                 console.log("SELECTED: Down", evt.target.classList)
-                if (evt.target.classList.contains('selector')) {
-                    selectedElement = evt.target;
+                if (evt.target === select_mode.bounding_box_) {
+                    selectedElement = evt.target
                     mouse_offset = getMousePosition(evt);
-
-                    // Make sure the first transform on the element is a translate transform
-                    transforms = selectedElement.transform.baseVal;
-
-                    if (transforms.length === 0 || transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
-                        // Create an transform that translates by (0, 0)
-                        const translate = svg.createSVGTransform();
-                        translate.setTranslate(0, 0);
-                        selectedElement.transform.baseVal.insertItemBefore(translate, 0);
-                    }
-
-                    // Get initial translation
-                    transform = transforms.getItem(0);
-                    mouse_offset.x -= transform.matrix.e;
-                    mouse_offset.y -= transform.matrix.f;
+                    select_mode.startDrag(mouse_offset);
                 }
             } else if (mode.m === mode.DELETE) {
                 if (evt.target.classList.contains('item')) selectedElement = evt.target;
             }
-
-            /*if (mode.m === "move" && evt.target.classList.contains('item')) {
-                selectedElement = evt.target;
-
-            }*/
         }
 
         function drag(evt) {
@@ -131,14 +137,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (selectedElement === null) console.log('Panning...');
                 } else if (mode.m === mode.SELECTED) {
                     if (selectedElement !== null) {
-                        console.log("SELECTED: Move")
                         evt.preventDefault();
-
-                        var coord = getMousePosition(evt);
-                        var dx = coord.x - mouse_offset.x;
-                        var dy = coord.y - mouse_offset.y;
-
-                        transform.setTranslate(dx, dy);
+                        select_mode.drag(getMousePosition(evt))
                     }
                 } else if (mode.m === mode.DELETE) {
                     // NOP
@@ -157,10 +157,10 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (mode.m === mode.SELECTED) {
                 console.log("SELECTED: up")
                 if (selectedElement !== null) {
+                    select_mode.endDrag()
                     selectedElement = null;
                 } else {
                     selectedElement = null;
-                    transform = null;
                     select_mode.clear()
                     mode.m = mode.NONE
                 }
