@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const mode_line_el = document.getElementById('mode_line')
         let mode = {
-            NONE: 0, SELECTED: 1, DELETE: 2, MULTISELECTOR: 3,
+            NONE: 0, SELECTED: 1, DELETE: 2, MULTISELECTOR: 3, ADDLINE: 4,
 
             m_: this.NONE, set m(val) {
                 this.m_ = val;
@@ -27,6 +27,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         document.getElementById('multi_selector_button').onclick = () => {
             if (!mouse_down) mode.m = mode.MULTISELECTOR;
+        }
+        document.getElementById('add_line_button').onclick = () => {
+            if (!mouse_down) mode.m = mode.ADDLINE;
         }
 
         function getMousePosition(evt) {
@@ -217,6 +220,37 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        let add_line_mode = {
+            line_: null, clear() {
+                if (this.line_ !== null) {
+                    this.line_ = null
+                }
+            }, startDrag(mouse_pos) {
+                this.clear()
+
+                const line = svg_doc.createElementNS(svg.namespaceURI, "line");
+                line.setAttribute("x1", mouse_pos.x.toString());
+                line.setAttribute("y1", mouse_pos.y.toString());
+                line.setAttribute("x2", mouse_pos.x.toString());
+                line.setAttribute("y2", mouse_pos.y.toString());
+                line.setAttribute("stroke", "#F00");
+                line.setAttribute("stroke-width", "3");
+                line.classList.add("item");
+
+                svg.appendChild(line);
+                this.line_ = line;
+                console.log(mouse_pos)
+
+            }, drag(mouse_pos) {
+                this.line_.setAttribute("x2", mouse_pos.x.toString());
+                this.line_.setAttribute("y2", mouse_pos.y.toString());
+
+            }, endDrag(mouse_pos) {
+                console.log(mouse_pos)
+                this.drag(mouse_pos)
+            }
+        }
+
         function startDrag(evt) {
             mouse_down = true;
 
@@ -235,6 +269,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (evt.target.classList.contains('item')) selectedElement = evt.target;
             } else if (mode.m === mode.MULTISELECTOR) {
                 multi_selector_mode.start_create(getMousePosition(evt))
+            } else if (mode.m === mode.ADDLINE) {
+                add_line_mode.startDrag(getMousePosition(evt))
             }
         }
 
@@ -251,6 +287,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     // NOP
                 } else if (mode.m === mode.MULTISELECTOR) {
                     multi_selector_mode.drag_create(getMousePosition(evt))
+                } else if (mode.m === mode.ADDLINE) {
+                    add_line_mode.drag(getMousePosition(evt))
                 }
             }
         }
@@ -290,6 +328,10 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (mode.m === mode.MULTISELECTOR) {
                 multi_selector_mode.end_create(getMousePosition(evt))
                 mode.m = mode.NONE
+            } else if (mode.m === mode.ADDLINE) {
+                add_line_mode.endDrag(getMousePosition(evt))
+                mode.m = mode.SELECTED
+                select_mode.el = add_line_mode.line_
             }
         }
 
