@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const mode_line_el = document.getElementById('mode_line')
         let mode = {
-            NONE: 0, SELECTED: 1, DELETE: 2,
+            NONE: 0, SELECTED: 1, DELETE: 2, MULTISELECTOR: 3,
 
             m_: this.NONE, set m(val) {
                 this.m_ = val;
@@ -21,7 +21,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         }
         mode.m = mode.NONE;
-        document.getElementById('delete_el_button').onclick = () => mode.m = mode.DELETE;
+
+        document.getElementById('delete_el_button').onclick = () => {
+            if (!mouse_down) mode.m = mode.DELETE;
+        }
+        document.getElementById('multi_selector_button').onclick = () => {
+            if (!mouse_down) mode.m = mode.MULTISELECTOR;
+        }
 
         function getMousePosition(evt) {
             const CTM = svg.getScreenCTM();
@@ -156,6 +162,57 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        let multi_selector_mode = {
+            rect_: null, circle_: null, els_: [], clear() {
+                if (this.rect_ !== null) {
+                    this.rect_.remove()
+                    this.circle_.remove()
+                }
+                this.els_ = []
+            }, start_create(mouse_pos) {
+                this.clear()
+
+                this.mouse_start = mouse_pos;
+                const rect = svg_doc.createElementNS(svg.namespaceURI, "rect");
+                rect.setAttribute("x", mouse_pos.x.toString());
+                rect.setAttribute("y", mouse_pos.y.toString());
+                rect.setAttribute("width", '1');
+                rect.setAttribute("height", '1');
+                rect.setAttribute("fill", "#5cceee");
+                rect.setAttribute("fill-opacity", "0.1");
+                rect.setAttribute("stroke", "green");
+                rect.setAttribute("stroke-width", "1");
+                rect.classList.add("multiselector");
+
+                svg.appendChild(rect);
+                this.rect_ = rect;
+
+                const circle = svg_doc.createElementNS(svg.namespaceURI, "circle");
+                circle.setAttribute("cx", mouse_pos.x.toString());
+                circle.setAttribute("cy", mouse_pos.y.toString());
+                circle.setAttribute("r", "2");
+                circle.setAttribute("fill", "#000");
+                circle.setAttribute("fill-opacity", "0.8");
+                circle.classList.add("selector_closer");
+
+                svg.appendChild(circle);
+                this.circle_ = circle;
+
+            }, drag_create(mouse_pos) {
+                this.rect_.setAttribute("x", (Math.min(mouse_pos.x, this.mouse_start.x)).toString());
+                this.rect_.setAttribute("y", (Math.min(mouse_pos.y, this.mouse_start.y)).toString());
+                this.rect_.setAttribute("width", Math.abs(mouse_pos.x - this.mouse_start.x).toString());
+                this.rect_.setAttribute("height", Math.abs(mouse_pos.y - this.mouse_start.y).toString());
+
+                this.circle_.setAttribute('cx', (Math.max(mouse_pos.x, this.mouse_start.x)).toString())
+                this.circle_.setAttribute('cy', (Math.min(mouse_pos.y, this.mouse_start.y)).toString())
+            }, end_create(mouse_pos) {
+                this.drag_create((mouse_pos))
+                this.p1 = {x: Math.min(mouse_pos.x, this.mouse_start.x), y: Math.min(mouse_pos.y, this.mouse_start.y)}
+                this.p2 = {x: Math.max(mouse_pos.x, this.mouse_start.x), y: Math.max(mouse_pos.y, this.mouse_start.y)}
+            }
+        }
+
         function startDrag(evt) {
             mouse_down = true;
 
@@ -172,6 +229,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else if (mode.m === mode.DELETE) {
                 if (evt.target.classList.contains('item')) selectedElement = evt.target;
+            } else if (mode.m === mode.MULTISELECTOR) {
+                multi_selector_mode.start_create(getMousePosition(evt))
             }
         }
 
@@ -186,6 +245,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 } else if (mode.m === mode.DELETE) {
                     // NOP
+                } else if (mode.m === mode.MULTISELECTOR) {
+                    multi_selector_mode.drag_create(getMousePosition(evt))
                 }
             }
         }
@@ -220,6 +281,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     selectedElement = null;
                 }
                 mode.m = mode.NONE;
+            } else if (mode.m === mode.MULTISELECTOR) {
+                multi_selector_mode.end_create(getMousePosition(evt))
+                mode.m = mode.NONE
             }
         }
 
