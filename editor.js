@@ -91,20 +91,33 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Create an transform that translates by (0, 0)
                     const translate = svg.createSVGTransform();
                     translate.setTranslate(0, 0);
-                    this.bounding_box_.transform.baseVal.insertItemBefore(translate, 0);
+                    transforms.insertItemBefore(translate, 0);
                 }
 
                 // Get initial translation
                 this.transform_ = transforms.getItem(0);
                 this.mouse_offset_.x -= this.transform_.matrix.e;
                 this.mouse_offset_.y -= this.transform_.matrix.f;
+
+                const el_transforms = this.el_.transform.baseVal;
+                if (el_transforms.length === 0 || el_transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
+                    // Create an transform that translates by (0, 0)
+                    const translate = svg.createSVGTransform();
+                    translate.setTranslate(0, 0);
+                    el_transforms.insertItemBefore(translate, 0);
+                }
+                this.el_transform_ = el_transforms.getItem(0);
+                this.el_transform_e_ = this.el_transform_.matrix.e;
+                this.el_transform_f_ = this.el_transform_.matrix.f;
             }, drag(mouse_pos) {
                 const dx = mouse_pos.x - this.mouse_offset_.x;
                 const dy = mouse_pos.y - this.mouse_offset_.y;
 
                 this.transform_.setTranslate(dx, dy);
+                this.el_transform_.setTranslate(this.el_transform_e_ + dx, this.el_transform_f_ + dy);
             }, endDrag() {
                 this.transform_ = null;
+                this.el_transform_ = null;
             }
         }
 
@@ -164,9 +177,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 mode.m = mode.NONE;
             }
-
-            /*if (mode.m === "move") {
-            }*/
         }
 
         svg.addEventListener('mousedown', startDrag);
