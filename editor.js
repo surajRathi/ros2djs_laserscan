@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const mode_line_el = document.getElementById('mode_line')
         let mode = {
-            NONE: 0, SELECTED: 1, DELETE: 2, MULTISELECTOR: 3, ADDLINE: 4,
+            NONE: 0, SELECTED: 1, DELETE: 2, MULTI_SELECTOR: 3, ADD_LINE: 4,
 
             m_: this.NONE, set m(val) {
                 this.m_ = val;
@@ -26,10 +26,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!mouse_down) mode.m = mode.DELETE;
         }
         document.getElementById('multi_selector_button').onclick = () => {
-            if (!mouse_down) mode.m = mode.MULTISELECTOR;
+            if (!mouse_down) mode.m = mode.MULTI_SELECTOR;
         }
         document.getElementById('add_line_button').onclick = () => {
-            if (!mouse_down) mode.m = mode.ADDLINE;
+            if (!mouse_down) mode.m = mode.ADD_LINE;
         }
 
         function getMousePosition(evt) {
@@ -267,9 +267,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else if (mode.m === mode.DELETE) {
                 if (evt.target.classList.contains('item')) selectedElement = evt.target;
-            } else if (mode.m === mode.MULTISELECTOR) {
+            } else if (mode.m === mode.MULTI_SELECTOR) {
                 multi_selector_mode.start_create(getMousePosition(evt))
-            } else if (mode.m === mode.ADDLINE) {
+            } else if (mode.m === mode.ADD_LINE) {
                 add_line_mode.startDrag(getMousePosition(evt))
             }
         }
@@ -285,9 +285,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 } else if (mode.m === mode.DELETE) {
                     // NOP
-                } else if (mode.m === mode.MULTISELECTOR) {
+                } else if (mode.m === mode.MULTI_SELECTOR) {
                     multi_selector_mode.drag_create(getMousePosition(evt))
-                } else if (mode.m === mode.ADDLINE) {
+                } else if (mode.m === mode.ADD_LINE) {
                     add_line_mode.drag(getMousePosition(evt))
                 }
             }
@@ -325,10 +325,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     selectedElement = null;
                 }
                 mode.m = mode.NONE;
-            } else if (mode.m === mode.MULTISELECTOR) {
+            } else if (mode.m === mode.MULTI_SELECTOR) {
                 multi_selector_mode.end_create(getMousePosition(evt))
                 mode.m = mode.NONE
-            } else if (mode.m === mode.ADDLINE) {
+            } else if (mode.m === mode.ADD_LINE) {
                 add_line_mode.endDrag(getMousePosition(evt))
                 mode.m = mode.SELECTED
                 select_mode.el = add_line_mode.line_
