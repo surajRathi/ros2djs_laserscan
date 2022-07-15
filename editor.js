@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        let multi_selector_mode = {
+        let multi_line_selector_mode = {
             rect_: null, circle_: null, els_: [], clear() {
                 if (this.rect_ !== null) {
                     this.rect_.remove()
@@ -241,14 +241,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 svg.appendChild(line);
                 this.line_ = line;
-                console.log(mouse_pos)
 
             }, drag(mouse_pos) {
                 this.line_.setAttribute("x2", mouse_pos.x.toString());
                 this.line_.setAttribute("y2", mouse_pos.y.toString());
 
             }, endDrag(mouse_pos) {
-                console.log(mouse_pos)
                 this.drag(mouse_pos)
             }
         }
@@ -289,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (mode.m === mode.NONE) {
                 console.log("none mode", mode.m)
-                if (evt.target.classList.contains('item') || evt.target === multi_selector_mode.circle_) selectedElement = evt.target
+                if (evt.target.classList.contains('item') || evt.target === multi_line_selector_mode.circle_) selectedElement = evt.target
             } else if (mode.m === mode.SELECTED) {
                 if (evt.target === select_mode.circle_) {
                     selectedElement = evt.target
@@ -301,7 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (mode.m === mode.DELETE) {
                 if (evt.target.classList.contains('item')) selectedElement = evt.target;
             } else if (mode.m === mode.MULTI_SELECTOR) {
-                multi_selector_mode.start_create(getMousePosition(evt))
+                multi_line_selector_mode.start_create(getMousePosition(evt))
             } else if (mode.m === mode.ADD_LINE) {
                 add_line_mode.startDrag(getMousePosition(evt))
             } else if (mode.m === mode.ADD_RECT) {
@@ -321,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (mode.m === mode.DELETE) {
                     // NOP
                 } else if (mode.m === mode.MULTI_SELECTOR) {
-                    multi_selector_mode.drag_create(getMousePosition(evt))
+                    multi_line_selector_mode.drag_create(getMousePosition(evt))
                 } else if (mode.m === mode.ADD_LINE) {
                     add_line_mode.drag(getMousePosition(evt))
                 } else if (mode.m === mode.ADD_RECT) {
@@ -333,8 +331,8 @@ document.addEventListener('DOMContentLoaded', () => {
         function endDrag(evt) {
             mouse_down = false;
             if (mode.m === mode.NONE) {
-                if (selectedElement === multi_selector_mode.circle_) {
-                    if (evt.target === multi_selector_mode.circle_) multi_selector_mode.clear();
+                if (selectedElement === multi_line_selector_mode.circle_) {
+                    if (evt.target === multi_line_selector_mode.circle_) multi_line_selector_mode.clear();
                 } else if (selectedElement !== null) {
                     mode.m = mode.SELECTED
                     select_mode.el = selectedElement;
@@ -363,7 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 mode.m = mode.NONE;
             } else if (mode.m === mode.MULTI_SELECTOR) {
-                multi_selector_mode.end_create(getMousePosition(evt))
+                multi_line_selector_mode.end_create(getMousePosition(evt))
                 mode.m = mode.NONE
             } else if (mode.m === mode.ADD_LINE) {
                 add_line_mode.endDrag(getMousePosition(evt))
