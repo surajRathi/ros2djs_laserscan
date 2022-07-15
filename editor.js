@@ -252,6 +252,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     el.remove()
                 }
                 this.els_ = []
+            }, join_lines() {
+                x1 = 0
+                y1 = 0
+                x2 = 50
+                y2 = 10
+
+                const line = svg_doc.createElementNS(svg.namespaceURI, "line");
+                line.setAttribute("x1", x1.toString());
+                line.setAttribute("y1", y1.toString());
+                line.setAttribute("x2", x2.toString());
+                line.setAttribute("y2", y2.toString());
+                line.setAttribute("stroke", "#F00");
+                line.setAttribute("stroke-width", "3");
+                line.classList.add("item");
+
+                svg.appendChild(line);
+                this.delete_els()
+                this.clear()
+                return line;
             }
         }
 
@@ -326,6 +345,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     selectedElement = evt.target
                     mouse_offset = getMousePosition(evt);
                     select_mode.startDrag(mouse_offset);
+                } else if (evt.target == select_mode.circle_) {
+                    selectedElement = evt.target
                 }
             } else if (mode.m === mode.DELETE) {
                 if (evt.target.classList.contains('item')) selectedElement = evt.target;
@@ -409,7 +430,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (evt.target === multi_line_selector_mode.circle_) multi_line_selector_mode.clear();
                         mode.m = mode.NONE
                     } else if (selectedElement === multi_line_selector_mode.circle2_) {
-                        // do line join
+                        mode.m = mode.SELECTED
+                        select_mode.el = multi_line_selector_mode.join_lines()
                     }
                 }
                 if (selectedElement == null && evt.target !== multi_line_selector_mode.rect_) {
