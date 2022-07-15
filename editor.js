@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const mode_line_el = document.getElementById('mode_line')
         let mode = {
-            NONE: 0, SELECTED: 1, DELETE: 2, MULTI_SELECTOR: 3, ADD_LINE: 4,
+            NONE: 0, SELECTED: 1, DELETE: 2, MULTI_SELECTOR: 3, ADD_LINE: 4, ADD_RECT: 5,
 
             m_: this.NONE, set m(val) {
                 this.m_ = val;
@@ -30,6 +30,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         document.getElementById('add_line_button').onclick = () => {
             if (!mouse_down) mode.m = mode.ADD_LINE;
+        }
+        document.getElementById('add_rect_button').onclick = () => {
+            if (!mouse_down) mode.m = mode.ADD_RECT;
         }
 
         function getMousePosition(evt) {
@@ -251,6 +254,37 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        let add_rect_mode = {
+            rect_: null, clear() {
+                if (this.rect_ !== null) {
+                    this.rect_ = null
+                }
+            }, startDrag(mouse_pos) {
+                this.clear()
+
+                this.mouse_start = mouse_pos;
+                const rect = svg_doc.createElementNS(svg.namespaceURI, "rect");
+                rect.setAttribute("x", mouse_pos.x.toString());
+                rect.setAttribute("y", mouse_pos.y.toString());
+                rect.setAttribute("width", '1');
+                rect.setAttribute("height", '1');
+                rect.setAttribute("fill", "#F00");
+                rect.setAttribute("fill-opacity", "1.0");
+                rect.classList.add("item");
+
+                svg.appendChild(rect);
+                this.rect_ = rect;
+
+            }, drag(mouse_pos) {
+                this.rect_.setAttribute("x", (Math.min(mouse_pos.x, this.mouse_start.x)).toString());
+                this.rect_.setAttribute("y", (Math.min(mouse_pos.y, this.mouse_start.y)).toString());
+                this.rect_.setAttribute("width", Math.abs(mouse_pos.x - this.mouse_start.x).toString());
+                this.rect_.setAttribute("height", Math.abs(mouse_pos.y - this.mouse_start.y).toString());
+            }, endDrag(mouse_pos) {
+                this.drag(mouse_pos)
+            }
+        }
+
         function startDrag(evt) {
             mouse_down = true;
 
@@ -271,6 +305,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 multi_selector_mode.start_create(getMousePosition(evt))
             } else if (mode.m === mode.ADD_LINE) {
                 add_line_mode.startDrag(getMousePosition(evt))
+            } else if (mode.m === mode.ADD_RECT) {
+                add_rect_mode.startDrag(getMousePosition(evt))
             }
         }
 
@@ -289,6 +325,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     multi_selector_mode.drag_create(getMousePosition(evt))
                 } else if (mode.m === mode.ADD_LINE) {
                     add_line_mode.drag(getMousePosition(evt))
+                } else if (mode.m === mode.ADD_RECT) {
+                    add_rect_mode.drag(getMousePosition(evt))
                 }
             }
         }
@@ -332,6 +370,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 add_line_mode.endDrag(getMousePosition(evt))
                 mode.m = mode.SELECTED
                 select_mode.el = add_line_mode.line_
+            } else if (mode.m === mode.ADD_RECT) {
+                add_rect_mode.endDrag(getMousePosition(evt))
+                mode.m = mode.SELECTED
+                select_mode.el = add_rect_mode.rect_
             }
         }
 
