@@ -1,4 +1,3 @@
-var a;
 document.addEventListener('DOMContentLoaded', () => {
     const svg_el = document.getElementById('map_svg');
     setTimeout(() => {
