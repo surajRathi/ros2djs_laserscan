@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const svg_doc = svg_el.getSVGDocument();
         const svg = svg_doc.getElementsByTagName('svg')[0];
 
-        let mouse_down = false, selectedElement = null, mouse_offset = null, transform = null;
+        let mouse_down = false, selectedElement = null, mouse_offset = null;
 
         const mode_line_el = document.getElementById('mode_line')
         let mode = {
@@ -47,10 +47,11 @@ document.addEventListener('DOMContentLoaded', () => {
         let select_mode = {
             el_: null, bounding_box_: null, circle_: null, clear() {
                 this.el_ = null
-                if (this.bounding_box_ !== null) {
+                if (this.bounding_box_ !== null)
                     this.bounding_box_.remove()
+                if (this.circle_ !== null)
                     this.circle_.remove()
-                }
+
             }, set el(val) {
                 console.log("Selected", val)
                 this.clear()
@@ -117,11 +118,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.el_mouse_offset_ = Object.assign({}, mouse_offset); // THIS IS A SHALLOW COPY!! ; For a Deep Copy: (relatively new) structuredClone(mouse_offset)
                 this.c_mouse_offset_ = Object.assign({}, mouse_offset); // THIS IS A SHALLOW COPY!! ; For a Deep Copy: (relatively new) structuredClone(mouse_offset)
 
-                // Make sure the first transform on the element is a translate transform
+                // Make sure the first transform on the element is a `translate` transform
                 const transforms = this.bounding_box_.transform.baseVal;
 
                 if (transforms.length === 0 || transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
-                    // Create an transform that translates by (0, 0)
+                    // Create a transform that translates by (0, 0)
                     const translate = svg.createSVGTransform();
                     translate.setTranslate(0, 0);
                     transforms.insertItemBefore(translate, 0);
@@ -134,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const el_transforms = this.el_.transform.baseVal;
                 if (el_transforms.length === 0 || el_transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
-                    // Create an transform that translates by (0, 0)
+                    // Create a transform that translates by (0, 0)
                     const translate = svg.createSVGTransform();
                     translate.setTranslate(0, 0);
                     el_transforms.insertItemBefore(translate, 0);
@@ -145,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const c_transforms = this.circle_.transform.baseVal;
                 if (c_transforms.length === 0 || c_transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
-                    // Create an transform that translates by (0, 0)
+                    // Create a transform that translates by (0, 0)
                     const translate = svg.createSVGTransform();
                     translate.setTranslate(0, 0);
                     c_transforms.insertItemBefore(translate, 0);
@@ -158,7 +159,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.el_transform_.setTranslate(mouse_pos.x - this.el_mouse_offset_.x, mouse_pos.y - this.el_mouse_offset_.y);
                 this.c_transform_.setTranslate(mouse_pos.x - this.c_mouse_offset_.x, mouse_pos.y - this.c_mouse_offset_.y);
             }, endDrag() {
-                this.transform_ = null;
                 this.el_transform_ = null;
                 this.c_transform_ = null;
                 this.bb_mouse_offset_ = null;
@@ -191,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 rect.setAttribute("fill-opacity", "0.1");
                 rect.setAttribute("stroke", "green");
                 rect.setAttribute("stroke-width", "1");
-                rect.classList.add("multiselector");
+                rect.classList.add("selector_bb");
 
                 svg.appendChild(rect);
                 this.rect_ = rect;
@@ -345,7 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     selectedElement = evt.target
                     mouse_offset = getMousePosition(evt);
                     select_mode.startDrag(mouse_offset);
-                } else if (evt.target == select_mode.circle_) {
+                } else if (evt.target === select_mode.circle_) {
                     selectedElement = evt.target
                 }
             } else if (mode.m === mode.DELETE) {
@@ -454,6 +454,6 @@ document.addEventListener('DOMContentLoaded', () => {
         svg.addEventListener('touchleave', endDrag);
         svg.addEventListener('touchcancel', endDrag);
 
-    }, 200) // onLoad doesnt work for the object tag
+    }, 200) // onLoad doesn't work for the object tag
 
 }, false);
