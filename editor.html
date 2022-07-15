@@ -14,7 +14,12 @@
     <button type="button" id="join_els_button">Send Goal Location</button>
     <br/>
 
-    <object id="map_svg" data="data/test.svg" type="image/svg+xml" width="800"></object>
+    <!--BG Image generated with ```convert costmap.pgm image.png```-->
+    <div style="height: fit-content;width: fit-content;background-image:url('data/tb3.png');background-size: contain;transform: scaleY(-1);">
+        <!--TODO: Instead of this double scaleY, use a pseudo element inside the div-->
+        <object id="map_svg" data="data/test.svg" type="image/svg+xml" width="800"
+                style="transform: scaleY(-1);background:rgba(0,0,0,0.2)"></object>
+    </div>
 </div>
 </body>
 </html>
