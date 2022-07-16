@@ -8,13 +8,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const mode_line_el = document.getElementById('mode_line')
         let mode = {
-            NONE: 0, SELECTED: 1, DELETE: 2, CREATE_MULTI_SELECTOR: 3, ADD_LINE: 4, ADD_RECT: 5, USE_MULTI_SELECTOR: 6,
+            NONE: 0,
+            SELECTED: 1,
+            DELETE: 2,
+            CREATE_MULTI_SELECTOR: 3,
+            ADD_LINE: 4,
+            ADD_RECT: 5,
+            USE_MULTI_SELECTOR: 6,
+            SELECTED_LINE: 7,
 
-            m_: this.NONE, set m(val) {
+            m_: this.NONE,
+            set m(val) {
                 this.m_ = val;
                 mode_line_el.innerText = Object.keys(this).find(e => this[e] === this.m_).toString()
                 console.log('Mode: ', this.m_, Object.keys(this).find(e => this[e] === this.m_).toString())
-            }, get m() {
+            },
+            get m() {
                 return this.m_;
             },
 
@@ -162,6 +171,180 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.bb_mouse_offset_ = null;
                 this.el_mouse_offset_ = null;
                 this.c_mouse_offset_ = null;
+            }
+        }
+
+        let line_select_mode = {
+            el_: null, bounding_box_: null, circle_: null, c1_: null, c2_: null, clear() {
+                this.el_ = null
+                if (this.bounding_box_ !== null) this.bounding_box_.remove()
+                if (this.circle_ !== null) this.circle_.remove()
+                if (this.c1_ !== null) this.c1_.remove()
+                if (this.c2_ !== null) this.c2_.remove()
+
+            }, set el(val) {
+                console.log("Selected", val)
+                this.clear()
+                this.el_ = val;
+
+                // Setup bounding box
+                const bb = this.el_.getBoundingClientRect();
+                const screenToSVG = svg.getScreenCTM().inverse();
+
+                const p = svg.createSVGPoint()
+                p.x = bb.left
+                p.y = bb.top
+                const p1 = p.matrixTransform(screenToSVG);
+                p.x = bb.right
+                p.y = bb.bottom
+                const p2 = p.matrixTransform(screenToSVG)
+
+                const del = 5; // Pixels
+                p1.x -= del
+                p1.y -= del
+                p2.x += del
+                p2.y += del
+
+                // Get width and height
+                p2.x -= p1.x
+                p2.y -= p1.y
+
+                const rect = svg_doc.createElementNS(svg.namespaceURI, "rect");
+                rect.setAttribute("x", p1.x.toString());
+                rect.setAttribute("y", p1.y.toString());
+                rect.setAttribute("width", p2.x.toString());
+                rect.setAttribute("height", p2.y.toString());
+                rect.setAttribute("fill", "#5cceee");
+                rect.setAttribute("fill-opacity", "0.1");
+                rect.setAttribute("stroke", "green");
+                rect.setAttribute("stroke-width", "1");
+                rect.classList.add("selector");
+
+                svg.appendChild(rect);
+                this.bounding_box_ = rect;
+
+                let pc = svg.createSVGPoint()
+                pc.x = bb.right
+                pc.y = bb.top
+                pc = pc.matrixTransform(screenToSVG);
+                pc.x += del
+                pc.y -= del
+
+                const circle = svg_doc.createElementNS(svg.namespaceURI, "circle");
+                circle.setAttribute("cx", pc.x.toString());
+                circle.setAttribute("cy", pc.y.toString());
+                circle.setAttribute("r", "2");
+                circle.setAttribute("fill", "#000");
+                circle.setAttribute("fill-opacity", "0.8");
+                circle.classList.add("selector_closer");
+                svg.appendChild(circle);
+                this.circle_ = circle;
+
+                const circle1 = svg_doc.createElementNS(svg.namespaceURI, "circle");
+                circle1.setAttribute("cx", this.el_.getAttribute('x1').toString());
+                circle1.setAttribute("cy", this.el_.getAttribute('y1').toString());
+                circle1.setAttribute("r", "2");
+                circle1.setAttribute("fill", "#0F0");
+                circle1.setAttribute("fill-opacity", "0.8");
+                circle1.classList.add("endpoint");
+                svg.appendChild(circle1);
+                this.c1_ = circle1;
+
+                const circle2 = svg_doc.createElementNS(svg.namespaceURI, "circle");
+                circle2.setAttribute("cx", this.el_.getAttribute('x2').toString());
+                circle2.setAttribute("cy", this.el_.getAttribute('y2').toString());
+                circle2.setAttribute("r", "2");
+                circle2.setAttribute("fill", "#0F0");
+                circle2.setAttribute("fill-opacity", "0.8");
+                circle2.classList.add("endpoint");
+
+                svg.appendChild(circle2);
+                this.c2_ = circle2;
+
+            }, get el() {
+                return this.el_;
+            }, startDrag(mouse_offset) {
+                this.bb_mouse_offset_ = mouse_offset
+                this.el_mouse_offset_ = Object.assign({}, mouse_offset); // THIS IS A SHALLOW COPY!! ; For a Deep Copy: (relatively new) structuredClone(mouse_offset)
+                this.c_mouse_offset_ = Object.assign({}, mouse_offset); // THIS IS A SHALLOW COPY!! ; For a Deep Copy: (relatively new) structuredClone(mouse_offset)
+                this.c1_mouse_offset_ = Object.assign({}, mouse_offset); // THIS IS A SHALLOW COPY!! ; For a Deep Copy: (relatively new) structuredClone(mouse_offset)
+                this.c2_mouse_offset_ = Object.assign({}, mouse_offset); // THIS IS A SHALLOW COPY!! ; For a Deep Copy: (relatively new) structuredClone(mouse_offset)
+
+                // Make sure the first transform on the element is a `translate` transform
+                const transforms = this.bounding_box_.transform.baseVal;
+
+                if (transforms.length === 0 || transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
+                    // Create a transform that translates by (0, 0)
+                    const translate = svg.createSVGTransform();
+                    translate.setTranslate(0, 0);
+                    transforms.insertItemBefore(translate, 0);
+                }
+
+                // Get initial translation
+                this.bb_transform_ = transforms.getItem(0);
+                this.bb_mouse_offset_.x -= this.bb_transform_.matrix.e;
+                this.bb_mouse_offset_.y -= this.bb_transform_.matrix.f;
+
+                const el_transforms = this.el_.transform.baseVal;
+                if (el_transforms.length === 0 || el_transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
+                    // Create a transform that translates by (0, 0)
+                    const translate = svg.createSVGTransform();
+                    translate.setTranslate(0, 0);
+                    el_transforms.insertItemBefore(translate, 0);
+                }
+                this.el_transform_ = el_transforms.getItem(0);
+                this.el_mouse_offset_.x -= this.el_transform_.matrix.e;
+                this.el_mouse_offset_.y -= this.el_transform_.matrix.f;
+
+                const c_transforms = this.circle_.transform.baseVal;
+                if (c_transforms.length === 0 || c_transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
+                    // Create a transform that translates by (0, 0)
+                    const translate = svg.createSVGTransform();
+                    translate.setTranslate(0, 0);
+                    c_transforms.insertItemBefore(translate, 0);
+                }
+                this.c_transform_ = c_transforms.getItem(0);
+                this.c_mouse_offset_.x -= this.c_transform_.matrix.e;
+                this.c_mouse_offset_.y -= this.c_transform_.matrix.f;
+
+
+                const c1_transforms = this.c1_.transform.baseVal;
+                if (c1_transforms.length === 0 || c1_transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
+                    // Create a transform that translates by (0, 0)
+                    const translate = svg.createSVGTransform();
+                    translate.setTranslate(0, 0);
+                    c1_transforms.insertItemBefore(translate, 0);
+                }
+                this.c1_transform_ = c1_transforms.getItem(0);
+                this.c1_mouse_offset_.x -= this.c1_transform_.matrix.e;
+                this.c1_mouse_offset_.y -= this.c1_transform_.matrix.f;
+
+                const c2_transforms = this.c2_.transform.baseVal;
+                if (c2_transforms.length === 0 || c2_transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
+                    // Create a transform that translates by (0, 0)
+                    const translate = svg.createSVGTransform();
+                    translate.setTranslate(0, 0);
+                    c2_transforms.insertItemBefore(translate, 0);
+                }
+                this.c2_transform_ = c2_transforms.getItem(0);
+                this.c2_mouse_offset_.x -= this.c2_transform_.matrix.e;
+                this.c2_mouse_offset_.y -= this.c2_transform_.matrix.f;
+            }, drag(mouse_pos) {
+                this.bb_transform_.setTranslate(mouse_pos.x - this.bb_mouse_offset_.x, mouse_pos.y - this.bb_mouse_offset_.y);
+                this.el_transform_.setTranslate(mouse_pos.x - this.el_mouse_offset_.x, mouse_pos.y - this.el_mouse_offset_.y);
+                this.c_transform_.setTranslate(mouse_pos.x - this.c_mouse_offset_.x, mouse_pos.y - this.c_mouse_offset_.y);
+                this.c1_transform_.setTranslate(mouse_pos.x - this.c1_mouse_offset_.x, mouse_pos.y - this.c1_mouse_offset_.y);
+                this.c2_transform_.setTranslate(mouse_pos.x - this.c2_mouse_offset_.x, mouse_pos.y - this.c2_mouse_offset_.y);
+            }, endDrag() {
+                this.el_transform_ = null;
+                this.c_transform_ = null;
+                this.c1_transform_ = null;
+                this.c2_transform_ = null;
+                this.bb_mouse_offset_ = null;
+                this.el_mouse_offset_ = null;
+                this.c_mouse_offset_ = null;
+                this.c1_mouse_offset_ = null;
+                this.c2_mouse_offset_ = null;
             }
         }
 
@@ -399,6 +582,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (evt.target === select_mode.circle_) {
                     selectedElement = evt.target
                 }
+            } else if (mode.m === mode.SELECTED_LINE) {
+                if (evt.target === line_select_mode.bounding_box_) {
+                    selectedElement = evt.target
+                    mouse_offset = getMousePosition(evt);
+                    line_select_mode.startDrag(mouse_offset);
+                } else if (evt.target === line_select_mode.circle_ || evt.target === line_select_mode.c1_ || evt.target === line_select_mode.c2_) {
+                    selectedElement = evt.target
+                }
             } else if (mode.m === mode.DELETE) {
                 if (evt.target.classList.contains('item')) selectedElement = evt.target;
             } else if (mode.m === mode.CREATE_MULTI_SELECTOR) {
@@ -423,6 +614,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         evt.preventDefault();
                         select_mode.drag(getMousePosition(evt))
                     }
+                } else if (mode.m === mode.SELECTED_LINE) {
+                    if (selectedElement === line_select_mode.bounding_box_) {
+                        evt.preventDefault();
+                        line_select_mode.drag(getMousePosition(evt))
+                    }
                 } else if (mode.m === mode.DELETE) {
                     // NOP
                 } else if (mode.m === mode.CREATE_MULTI_SELECTOR) {
@@ -439,8 +635,13 @@ document.addEventListener('DOMContentLoaded', () => {
             mouse_down = false;
             if (mode.m === mode.NONE) {
                 if (selectedElement !== null) {
-                    mode.m = mode.SELECTED
-                    select_mode.el = selectedElement;
+                    if (false && selectedElement.tagName === "line") {
+                        mode.m = mode.SELECTED_LINE
+                        line_select_mode.el = selectedElement;
+                    } else {
+                        mode.m = mode.SELECTED
+                        select_mode.el = selectedElement;
+                    }
                 }
             } else if (mode.m === mode.SELECTED) {
                 if (selectedElement === select_mode.bounding_box_) {
@@ -456,6 +657,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     selectedElement = null;
                     select_mode.clear()
+                    mode.m = mode.NONE
+                }
+
+            } else if (mode.m === mode.SELECTED_LINE) {
+                if (selectedElement === line_select_mode.bounding_box_) {
+                    line_select_mode.endDrag()
+                    selectedElement = null;
+                } else if (selectedElement === line_select_mode.circle_) {
+                    if (evt.target === line_select_mode.circle_) {
+                        line_select_mode.el.remove()
+                        line_select_mode.clear()
+                        mode.m = mode.NONE
+                    }
+                    selectedElement = null
+                } else {
+                    selectedElement = null;
+                    line_select_mode.clear()
                     mode.m = mode.NONE
                 }
 
