@@ -251,16 +251,69 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 this.els_ = []
             }, join_lines() {
-                x1 = 0
-                y1 = 0
-                x2 = 50
-                y2 = 10
+                if (this.els_.length === 0) {
+                    this.clear()
+                    return
+                }
+
+                if (this.els_.length === 1) {
+                    const el = this.els_[0]
+                    this.clear()
+                    return el
+                }
+
+                // There are two directions of lines: does the smaller x have the smaller y or the larger y
+                let dir = null;
+                {
+                    const el = this.els_[0];
+                    const x1 = el.getAttribute('x1')
+                    const x2 = el.getAttribute('x2')
+                    const y1 = el.getAttribute('y1')
+                    const y2 = el.getAttribute('y2')
+
+                    if (((x1 <= x2) && (y1 <= y2)) || ((x1 > x2) && (y1 > y2))) dir = 1; else dir = -1;
+                }
+                let X1 = Number.POSITIVE_INFINITY
+                let Y1 = Number.POSITIVE_INFINITY
+                let X2 = Number.NEGATIVE_INFINITY
+                let Y2 = Number.NEGATIVE_INFINITY
+
+                for (const el of this.els_) {
+                    const x1 = el.getAttribute('x1')
+                    const x2 = el.getAttribute('x2')
+                    const y1 = el.getAttribute('y1')
+                    const y2 = el.getAttribute('y2')
+
+                    if (x1 <= x2) {
+                        X1 = Math.min(X1, x1)
+                        X2 = Math.max(X2, x2)
+
+                        if (dir === 1) {
+                            Y1 = Math.min(Y1, y1)
+                            Y2 = Math.max(Y2, y2)
+                        } else {
+                            Y1 = Math.min(Y1, y2)
+                            Y2 = Math.max(Y2, y1)
+                        }
+                    } else {
+                        X1 = Math.min(X1, x2)
+                        X2 = Math.max(X2, x1)
+
+                        if (dir === 1) {
+                            Y1 = Math.min(Y1, y2)
+                            Y2 = Math.max(Y2, y1)
+                        } else {
+                            Y1 = Math.min(Y1, y1)
+                            Y2 = Math.max(Y2, y2)
+                        }
+                    }
+                }
 
                 const line = svg_doc.createElementNS(svg.namespaceURI, "line");
-                line.setAttribute("x1", x1.toString());
-                line.setAttribute("y1", y1.toString());
-                line.setAttribute("x2", x2.toString());
-                line.setAttribute("y2", y2.toString());
+                line.setAttribute("x1", X1.toString());
+                line.setAttribute("y1", Y1.toString());
+                line.setAttribute("x2", X2.toString());
+                line.setAttribute("y2", Y2.toString());
                 line.setAttribute("stroke", "#F00");
                 line.setAttribute("stroke-width", "3");
                 line.classList.add("item");
