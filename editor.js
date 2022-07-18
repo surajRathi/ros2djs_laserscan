@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const svg_doc = svg_el.getSVGDocument();
         const svg = svg_doc.getElementsByTagName('svg')[0];
 
-        let mouse_down = false, selectedElement = null, mouse_offset = null;
+        let mouse_down = false, selectedElement = null, mouse_offset = null, line_dragger = null;
 
         const mode_line_el = document.getElementById('mode_line')
         let mode = {
@@ -178,6 +178,48 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.clear()
                 this.el_ = val;
 
+                const rect = svg_doc.createElementNS(svg.namespaceURI, "rect");
+                rect.setAttribute("fill", "#5cceee");
+                rect.setAttribute("fill-opacity", "0.1");
+                rect.setAttribute("stroke", "green");
+                rect.setAttribute("stroke-width", "1");
+                rect.classList.add("selector");
+                svg.appendChild(rect);
+                this.bounding_box_ = rect;
+
+                const circle = svg_doc.createElementNS(svg.namespaceURI, "circle");
+                circle.setAttribute("r", "2");
+                circle.setAttribute("fill", "#000");
+                circle.setAttribute("fill-opacity", "0.8");
+                circle.classList.add("selector_closer");
+                svg.appendChild(circle);
+                this.circle_ = circle;
+
+                const circle1 = svg_doc.createElementNS(svg.namespaceURI, "circle");
+                circle1.setAttribute("r", "2");
+                circle1.setAttribute("fill", "#0F0");
+                circle1.setAttribute("fill-opacity", "1.0");
+                circle1.setAttribute("stroke", "#000");
+                circle1.setAttribute("stroke-width", "1");
+                circle1.setAttribute("stroke-opacity", "0.6");
+                circle1.classList.add("endpoint");
+                svg.appendChild(circle1);
+                this.c1_ = circle1;
+
+                const circle2 = svg_doc.createElementNS(svg.namespaceURI, "circle");
+                circle2.setAttribute("r", "2");
+                circle2.setAttribute("fill", "#0F0");
+                circle2.setAttribute("fill-opacity", "1.0");
+                circle2.setAttribute("stroke", "#000");
+                circle2.setAttribute("stroke-width", "1");
+                circle2.setAttribute("stroke-opacity", "0.6");
+                circle2.classList.add("endpoint");
+
+                svg.appendChild(circle2);
+                this.c2_ = circle2;
+
+                this.update_coords()
+            }, update_coords() {
                 // Setup bounding box
                 const bb = this.el_.getBoundingClientRect();
                 const screenToSVG = svg.getScreenCTM().inverse();
@@ -200,19 +242,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 p2.x -= p1.x
                 p2.y -= p1.y
 
-                const rect = svg_doc.createElementNS(svg.namespaceURI, "rect");
-                rect.setAttribute("x", p1.x.toString());
-                rect.setAttribute("y", p1.y.toString());
-                rect.setAttribute("width", p2.x.toString());
-                rect.setAttribute("height", p2.y.toString());
-                rect.setAttribute("fill", "#5cceee");
-                rect.setAttribute("fill-opacity", "0.1");
-                rect.setAttribute("stroke", "green");
-                rect.setAttribute("stroke-width", "1");
-                rect.classList.add("selector");
 
-                svg.appendChild(rect);
-                this.bounding_box_ = rect;
+                this.bounding_box_.setAttribute("x", p1.x.toString());
+                this.bounding_box_.setAttribute("y", p1.y.toString());
+                this.bounding_box_.setAttribute("width", p2.x.toString());
+                this.bounding_box_.setAttribute("height", p2.y.toString());
+
 
                 let pc = svg.createSVGPoint()
                 pc.x = bb.right
@@ -221,51 +256,43 @@ document.addEventListener('DOMContentLoaded', () => {
                 pc.x += del
                 pc.y -= del
 
-                const circle = svg_doc.createElementNS(svg.namespaceURI, "circle");
-                circle.setAttribute("cx", pc.x.toString());
-                circle.setAttribute("cy", pc.y.toString());
-                circle.setAttribute("r", "2");
-                circle.setAttribute("fill", "#000");
-                circle.setAttribute("fill-opacity", "0.8");
-                circle.classList.add("selector_closer");
-                svg.appendChild(circle);
-                this.circle_ = circle;
+                this.circle_.setAttribute("cx", pc.x.toString());
+                this.circle_.setAttribute("cy", pc.y.toString());
 
                 const cp1 = applyTransforms({
-                    x: this.el_.getAttribute('x1'),
-                    y: this.el_.getAttribute('y1')
+                    x: this.el_.getAttribute('x1'), y: this.el_.getAttribute('y1')
                 }, this.el_.transform.baseVal)
-                const circle1 = svg_doc.createElementNS(svg.namespaceURI, "circle");
-                circle1.setAttribute("cx", cp1.x.toString());
-                circle1.setAttribute("cy", cp1.y.toString());
-                circle1.setAttribute("r", "2");
-                circle1.setAttribute("fill", "#0F0");
-                circle1.setAttribute("fill-opacity", "1.0");
-                circle1.setAttribute("stroke", "#000");
-                circle1.setAttribute("stroke-width", "1");
-                circle1.setAttribute("stroke-opacity", "0.6");
-                circle1.classList.add("endpoint");
-                svg.appendChild(circle1);
-                this.c1_ = circle1;
+
+                this.c1_.setAttribute("cx", cp1.x.toString());
+                this.c1_.setAttribute("cy", cp1.y.toString());
 
                 const cp2 = applyTransforms({
-                    x: this.el_.getAttribute('x2'),
-                    y: this.el_.getAttribute('y2')
+                    x: this.el_.getAttribute('x2'), y: this.el_.getAttribute('y2')
                 }, this.el_.transform.baseVal)
-                const circle2 = svg_doc.createElementNS(svg.namespaceURI, "circle");
-                circle2.setAttribute("cx", cp2.x.toString());
-                circle2.setAttribute("cy", cp2.y.toString());
-                circle2.setAttribute("r", "2");
-                circle2.setAttribute("fill", "#0F0");
-                circle2.setAttribute("fill-opacity", "1.0");
-                circle2.setAttribute("stroke", "#000");
-                circle2.setAttribute("stroke-width", "1");
-                circle2.setAttribute("stroke-opacity", "0.6");
-                circle2.classList.add("endpoint");
+                this.c2_.setAttribute("cx", cp2.x.toString());
+                this.c2_.setAttribute("cy", cp2.y.toString());
 
-                svg.appendChild(circle2);
-                this.c2_ = circle2;
-
+            }, start_drag_1(mouse_pos) {
+                const start_pos = Object.assign({}, mouse_pos);
+                const point = {
+                    x: Number.parseFloat(this.el_.getAttribute('x1')), y: Number.parseFloat(this.el_.getAttribute('y1'))
+                }
+                return (mouse_pos) => {
+                    // console.log(point, start_pos, mouse_pos, point.x + mouse_pos.x - start_pos.x, point.y + mouse_pos.y - start_pos.y)
+                    this.el_.setAttribute('x1', (point.x + mouse_pos.x - start_pos.x).toString())
+                    this.el_.setAttribute('y1', (point.y + mouse_pos.y - start_pos.y).toString())
+                    this.update_coords()
+                }
+            }, start_drag_2(mouse_pos) {
+                const start_pos = Object.assign({}, mouse_pos);
+                const point = {
+                    x: Number.parseFloat(this.el_.getAttribute('x2')), y: Number.parseFloat(this.el_.getAttribute('y2'))
+                }
+                return (mouse_pos) => {
+                    this.el_.setAttribute('x2', (point.x + mouse_pos.x - start_pos.x).toString())
+                    this.el_.setAttribute('y2', (point.y + mouse_pos.y - start_pos.y).toString())
+                    this.update_coords()
+                }
             }, get el() {
                 return this.el_;
             }, startDrag(mouse_offset) {
@@ -518,8 +545,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     selectedElement = evt.target
                     mouse_offset = getMousePosition(evt);
                     line_select_mode.startDrag(mouse_offset);
-                } else if (evt.target === line_select_mode.circle_ || evt.target === line_select_mode.c1_ || evt.target === line_select_mode.c2_) {
+                } else if (evt.target === line_select_mode.circle_) {
                     selectedElement = evt.target
+                } else if (evt.target === line_select_mode.c1_) {
+                    line_dragger = line_select_mode.start_drag_1(getMousePosition(evt))
+                } else if (evt.target === line_select_mode.c2_) {
+                    line_dragger = line_select_mode.start_drag_2(getMousePosition(evt))
                 }
             } else if (mode.m === mode.DELETE) {
                 if (evt.target.classList.contains('item')) selectedElement = evt.target;
@@ -549,6 +580,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (selectedElement === line_select_mode.bounding_box_) {
                         evt.preventDefault();
                         line_select_mode.drag(getMousePosition(evt))
+                    } else if (line_dragger !== null) {
+                        line_dragger(getMousePosition(evt))
                     }
                 } else if (mode.m === mode.DELETE) {
                     // NOP
@@ -602,6 +635,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         mode.m = mode.NONE
                     }
                     selectedElement = null
+                } else if (line_dragger !== null) {
+                    line_dragger = null;
                 } else {
                     selectedElement = null;
                     line_select_mode.clear()
