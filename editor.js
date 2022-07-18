@@ -632,8 +632,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (evt.target === multi_line_selector_mode.circle_) multi_line_selector_mode.clear();
                         mode.m = mode.NONE
                     } else if (selectedElement === multi_line_selector_mode.circle2_) {
-                        mode.m = mode.SELECTED
-                        select_mode.el = multi_line_selector_mode.join_lines()
+                        mode.m = mode.SELECTED_LINE
+                        line_select_mode.el = multi_line_selector_mode.join_lines()
                     }
                 }
                 if (selectedElement == null && evt.target !== multi_line_selector_mode.rect_) {
