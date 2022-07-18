@@ -273,6 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.c2_.setAttribute("cy", cp2.y.toString());
 
             }, start_drag_1(mouse_pos) {
+                this.el = this.el_
                 const start_pos = Object.assign({}, mouse_pos);
                 const point = {
                     x: Number.parseFloat(this.el_.getAttribute('x1')), y: Number.parseFloat(this.el_.getAttribute('y1'))
@@ -284,6 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     this.update_coords()
                 }
             }, start_drag_2(mouse_pos) {
+                this.el = this.el_
                 const start_pos = Object.assign({}, mouse_pos);
                 const point = {
                     x: Number.parseFloat(this.el_.getAttribute('x2')), y: Number.parseFloat(this.el_.getAttribute('y2'))
