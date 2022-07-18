@@ -53,6 +53,40 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         }
 
+        function applyTransforms(pt, transforms) {
+            let p = {x: pt.x, y: pt.y}
+            for (const trans of transforms) {
+                const matrix = trans.matrix;
+                const xt = p.x, yt = p.y;
+                p.x = xt * matrix.a + yt * matrix.b + matrix.e
+                p.y = xt * matrix.c + yt * matrix.d + matrix.f
+            }
+            return p
+        }
+
+        function element_mover(element, mouse_pos) {
+            const mouse_offset = Object.assign({}, mouse_pos);
+
+            // Make sure the first transform on the element is a `translate` transform
+            const transforms = element.transform.baseVal;
+
+            if (transforms.length === 0 || transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
+                // Create a transform that translates by (0, 0)
+                const translate = svg.createSVGTransform();
+                translate.setTranslate(0, 0);
+                transforms.insertItemBefore(translate, 0);
+            }
+
+            // Get initial translation
+            const transform = transforms.getItem(0);
+            mouse_offset.x -= transform.matrix.e;
+            mouse_offset.y -= transform.matrix.f;
+
+            return (mouse_pos) => {
+                transform.setTranslate(mouse_pos.x - mouse_offset.x, mouse_pos.y - mouse_offset.y);
+            }
+        }
+
         let select_mode = {
             el_: null, bounding_box_: null, circle_: null, clear() {
                 this.el_ = null
@@ -121,56 +155,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }, get el() {
                 return this.el_;
             }, startDrag(mouse_offset) {
-                this.bb_mouse_offset_ = mouse_offset
-                this.el_mouse_offset_ = Object.assign({}, mouse_offset); // THIS IS A SHALLOW COPY!! ; For a Deep Copy: (relatively new) structuredClone(mouse_offset)
-                this.c_mouse_offset_ = Object.assign({}, mouse_offset); // THIS IS A SHALLOW COPY!! ; For a Deep Copy: (relatively new) structuredClone(mouse_offset)
-
-                // Make sure the first transform on the element is a `translate` transform
-                const transforms = this.bounding_box_.transform.baseVal;
-
-                if (transforms.length === 0 || transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
-                    // Create a transform that translates by (0, 0)
-                    const translate = svg.createSVGTransform();
-                    translate.setTranslate(0, 0);
-                    transforms.insertItemBefore(translate, 0);
-                }
-
-                // Get initial translation
-                this.bb_transform_ = transforms.getItem(0);
-                this.bb_mouse_offset_.x -= this.bb_transform_.matrix.e;
-                this.bb_mouse_offset_.y -= this.bb_transform_.matrix.f;
-
-                const el_transforms = this.el_.transform.baseVal;
-                if (el_transforms.length === 0 || el_transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
-                    // Create a transform that translates by (0, 0)
-                    const translate = svg.createSVGTransform();
-                    translate.setTranslate(0, 0);
-                    el_transforms.insertItemBefore(translate, 0);
-                }
-                this.el_transform_ = el_transforms.getItem(0);
-                this.el_mouse_offset_.x -= this.el_transform_.matrix.e;
-                this.el_mouse_offset_.y -= this.el_transform_.matrix.f;
-
-                const c_transforms = this.circle_.transform.baseVal;
-                if (c_transforms.length === 0 || c_transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
-                    // Create a transform that translates by (0, 0)
-                    const translate = svg.createSVGTransform();
-                    translate.setTranslate(0, 0);
-                    c_transforms.insertItemBefore(translate, 0);
-                }
-                this.c_transform_ = c_transforms.getItem(0);
-                this.c_mouse_offset_.x -= this.c_transform_.matrix.e;
-                this.c_mouse_offset_.y -= this.c_transform_.matrix.f;
+                this.updaters = [element_mover(this.bounding_box_, mouse_offset), element_mover(this.el, mouse_offset), element_mover(this.circle_, mouse_offset)]
             }, drag(mouse_pos) {
-                this.bb_transform_.setTranslate(mouse_pos.x - this.bb_mouse_offset_.x, mouse_pos.y - this.bb_mouse_offset_.y);
-                this.el_transform_.setTranslate(mouse_pos.x - this.el_mouse_offset_.x, mouse_pos.y - this.el_mouse_offset_.y);
-                this.c_transform_.setTranslate(mouse_pos.x - this.c_mouse_offset_.x, mouse_pos.y - this.c_mouse_offset_.y);
-            }, endDrag() {
-                this.el_transform_ = null;
-                this.c_transform_ = null;
-                this.bb_mouse_offset_ = null;
-                this.el_mouse_offset_ = null;
-                this.c_mouse_offset_ = null;
+                for (const updater of this.updaters) {
+                    updater(mouse_pos);
+                }
+            }, endDrag(mouse_pos) {
+                this.drag(mouse_pos)
             }
         }
 
@@ -240,22 +231,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 svg.appendChild(circle);
                 this.circle_ = circle;
 
+                const cp1 = applyTransforms({
+                    x: this.el_.getAttribute('x1'),
+                    y: this.el_.getAttribute('y1')
+                }, this.el_.transform.baseVal)
                 const circle1 = svg_doc.createElementNS(svg.namespaceURI, "circle");
-                circle1.setAttribute("cx", this.el_.getAttribute('x1').toString());
-                circle1.setAttribute("cy", this.el_.getAttribute('y1').toString());
+                circle1.setAttribute("cx", cp1.x.toString());
+                circle1.setAttribute("cy", cp1.y.toString());
                 circle1.setAttribute("r", "2");
                 circle1.setAttribute("fill", "#0F0");
-                circle1.setAttribute("fill-opacity", "0.8");
+                circle1.setAttribute("fill-opacity", "1.0");
+                circle1.setAttribute("stroke", "#000");
+                circle1.setAttribute("stroke-width", "1");
+                circle1.setAttribute("stroke-opacity", "0.6");
                 circle1.classList.add("endpoint");
                 svg.appendChild(circle1);
                 this.c1_ = circle1;
 
+                const cp2 = applyTransforms({
+                    x: this.el_.getAttribute('x2'),
+                    y: this.el_.getAttribute('y2')
+                }, this.el_.transform.baseVal)
                 const circle2 = svg_doc.createElementNS(svg.namespaceURI, "circle");
-                circle2.setAttribute("cx", this.el_.getAttribute('x2').toString());
-                circle2.setAttribute("cy", this.el_.getAttribute('y2').toString());
+                circle2.setAttribute("cx", cp2.x.toString());
+                circle2.setAttribute("cy", cp2.y.toString());
                 circle2.setAttribute("r", "2");
                 circle2.setAttribute("fill", "#0F0");
-                circle2.setAttribute("fill-opacity", "0.8");
+                circle2.setAttribute("fill-opacity", "1.0");
+                circle2.setAttribute("stroke", "#000");
+                circle2.setAttribute("stroke-width", "1");
+                circle2.setAttribute("stroke-opacity", "0.6");
                 circle2.classList.add("endpoint");
 
                 svg.appendChild(circle2);
@@ -264,87 +269,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }, get el() {
                 return this.el_;
             }, startDrag(mouse_offset) {
-                this.bb_mouse_offset_ = mouse_offset
-                this.el_mouse_offset_ = Object.assign({}, mouse_offset); // THIS IS A SHALLOW COPY!! ; For a Deep Copy: (relatively new) structuredClone(mouse_offset)
-                this.c_mouse_offset_ = Object.assign({}, mouse_offset); // THIS IS A SHALLOW COPY!! ; For a Deep Copy: (relatively new) structuredClone(mouse_offset)
-                this.c1_mouse_offset_ = Object.assign({}, mouse_offset); // THIS IS A SHALLOW COPY!! ; For a Deep Copy: (relatively new) structuredClone(mouse_offset)
-                this.c2_mouse_offset_ = Object.assign({}, mouse_offset); // THIS IS A SHALLOW COPY!! ; For a Deep Copy: (relatively new) structuredClone(mouse_offset)
-
-                // Make sure the first transform on the element is a `translate` transform
-                const transforms = this.bounding_box_.transform.baseVal;
-
-                if (transforms.length === 0 || transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
-                    // Create a transform that translates by (0, 0)
-                    const translate = svg.createSVGTransform();
-                    translate.setTranslate(0, 0);
-                    transforms.insertItemBefore(translate, 0);
-                }
-
-                // Get initial translation
-                this.bb_transform_ = transforms.getItem(0);
-                this.bb_mouse_offset_.x -= this.bb_transform_.matrix.e;
-                this.bb_mouse_offset_.y -= this.bb_transform_.matrix.f;
-
-                const el_transforms = this.el_.transform.baseVal;
-                if (el_transforms.length === 0 || el_transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
-                    // Create a transform that translates by (0, 0)
-                    const translate = svg.createSVGTransform();
-                    translate.setTranslate(0, 0);
-                    el_transforms.insertItemBefore(translate, 0);
-                }
-                this.el_transform_ = el_transforms.getItem(0);
-                this.el_mouse_offset_.x -= this.el_transform_.matrix.e;
-                this.el_mouse_offset_.y -= this.el_transform_.matrix.f;
-
-                const c_transforms = this.circle_.transform.baseVal;
-                if (c_transforms.length === 0 || c_transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
-                    // Create a transform that translates by (0, 0)
-                    const translate = svg.createSVGTransform();
-                    translate.setTranslate(0, 0);
-                    c_transforms.insertItemBefore(translate, 0);
-                }
-                this.c_transform_ = c_transforms.getItem(0);
-                this.c_mouse_offset_.x -= this.c_transform_.matrix.e;
-                this.c_mouse_offset_.y -= this.c_transform_.matrix.f;
-
-
-                const c1_transforms = this.c1_.transform.baseVal;
-                if (c1_transforms.length === 0 || c1_transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
-                    // Create a transform that translates by (0, 0)
-                    const translate = svg.createSVGTransform();
-                    translate.setTranslate(0, 0);
-                    c1_transforms.insertItemBefore(translate, 0);
-                }
-                this.c1_transform_ = c1_transforms.getItem(0);
-                this.c1_mouse_offset_.x -= this.c1_transform_.matrix.e;
-                this.c1_mouse_offset_.y -= this.c1_transform_.matrix.f;
-
-                const c2_transforms = this.c2_.transform.baseVal;
-                if (c2_transforms.length === 0 || c2_transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
-                    // Create a transform that translates by (0, 0)
-                    const translate = svg.createSVGTransform();
-                    translate.setTranslate(0, 0);
-                    c2_transforms.insertItemBefore(translate, 0);
-                }
-                this.c2_transform_ = c2_transforms.getItem(0);
-                this.c2_mouse_offset_.x -= this.c2_transform_.matrix.e;
-                this.c2_mouse_offset_.y -= this.c2_transform_.matrix.f;
+                this.updaters = [element_mover(this.bounding_box_, mouse_offset), element_mover(this.el_, mouse_offset), element_mover(this.circle_, mouse_offset), element_mover(this.c1_, mouse_offset), element_mover(this.c2_, mouse_offset)]
             }, drag(mouse_pos) {
-                this.bb_transform_.setTranslate(mouse_pos.x - this.bb_mouse_offset_.x, mouse_pos.y - this.bb_mouse_offset_.y);
-                this.el_transform_.setTranslate(mouse_pos.x - this.el_mouse_offset_.x, mouse_pos.y - this.el_mouse_offset_.y);
-                this.c_transform_.setTranslate(mouse_pos.x - this.c_mouse_offset_.x, mouse_pos.y - this.c_mouse_offset_.y);
-                this.c1_transform_.setTranslate(mouse_pos.x - this.c1_mouse_offset_.x, mouse_pos.y - this.c1_mouse_offset_.y);
-                this.c2_transform_.setTranslate(mouse_pos.x - this.c2_mouse_offset_.x, mouse_pos.y - this.c2_mouse_offset_.y);
-            }, endDrag() {
-                this.el_transform_ = null;
-                this.c_transform_ = null;
-                this.c1_transform_ = null;
-                this.c2_transform_ = null;
-                this.bb_mouse_offset_ = null;
-                this.el_mouse_offset_ = null;
-                this.c_mouse_offset_ = null;
-                this.c1_mouse_offset_ = null;
-                this.c2_mouse_offset_ = null;
+                for (const updater of this.updaters) {
+                    updater(mouse_pos);
+                }
+            }, endDrag(mouse_pos) {
+                this.drag(mouse_pos)
             }
         }
 
@@ -635,7 +566,7 @@ document.addEventListener('DOMContentLoaded', () => {
             mouse_down = false;
             if (mode.m === mode.NONE) {
                 if (selectedElement !== null) {
-                    if (false && selectedElement.tagName === "line") {
+                    if (selectedElement.tagName === "line") {
                         mode.m = mode.SELECTED_LINE
                         line_select_mode.el = selectedElement;
                     } else {
@@ -645,7 +576,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else if (mode.m === mode.SELECTED) {
                 if (selectedElement === select_mode.bounding_box_) {
-                    select_mode.endDrag()
+                    select_mode.endDrag(getMousePosition(evt))
                     selectedElement = null;
                 } else if (selectedElement === select_mode.circle_) {
                     if (evt.target === select_mode.circle_) {
@@ -662,7 +593,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             } else if (mode.m === mode.SELECTED_LINE) {
                 if (selectedElement === line_select_mode.bounding_box_) {
-                    line_select_mode.endDrag()
+                    line_select_mode.endDrag(getMousePosition(evt))
                     selectedElement = null;
                 } else if (selectedElement === line_select_mode.circle_) {
                     if (evt.target === line_select_mode.circle_) {
