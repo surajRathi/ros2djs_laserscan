@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mode.m = mode.NONE;
 
         let layer = {
-            OBSTACLE: 'obstacle', PREFFERED: 'preffered', BLINKNBEEP: 'blinknbeep', l_: this.NONE, set l(val) {
+            OBSTACLE: 'obstacle', PREFERRED: 'preferred', BLINKNBEEP: 'blinknbeep', l_: this.NONE, set l(val) {
                 this.l_ = val;
                 layer_line_el.innerText = Object.keys(this).find(e => this[e] === this.l_).toString()
                 console.log('Layer: ', this.l_, Object.keys(this).find(e => e !== 'l_' && e !== 'l' && this[e] === this.l_).toString())
@@ -498,6 +498,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 line.setAttribute("stroke", "#F00");
                 line.setAttribute("stroke-width", "3");
                 line.classList.add("item");
+                if (layer.l === layer.PREFERRED) {
+                    line.setAttribute('stroke', "#B0F3C8")
+                    line.classList.add("preferred");
+                } else if (layer.l === layer.BLINKNBEEP) {
+                    line.setAttribute('stroke', "#e0cb52")
+                    line.classList.add("blinknbeep");
+                }
 
                 svg.appendChild(line);
                 this.line_ = line;
@@ -528,6 +535,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 rect.setAttribute("fill", "#F00");
                 rect.setAttribute("fill-opacity", "1.0");
                 rect.classList.add("item");
+                if (layer.l === layer.PREFERRED) {
+                    rect.setAttribute('fill', "#5bbb9f")
+                    rect.setAttribute('fill-opacity', "0.4")
+                    rect.classList.add("preferred");
+                } else if (layer.l === layer.BLINKNBEEP) {
+                    rect.setAttribute('fill', "#e0cb52")
+                    rect.setAttribute('fill-opacity', "0.4")
+                    rect.classList.add("blinknbeep");
+                }
+
 
                 svg.appendChild(rect);
                 this.rect_ = rect;
