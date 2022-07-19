@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
             set m(val) {
                 this.m_ = val;
                 mode_line_el.innerText = Object.keys(this).find(e => this[e] === this.m_).toString()
-                console.log('Mode: ', this.m_, Object.keys(this).find(e => this[e] === this.m_).toString())
+                console.log('Mode: ', this.m_, Object.keys(this).find(e => e !== 'm_' && e !== 'm' && this[e] === this.m_).toString())
             },
             get m() {
                 return this.m_;
