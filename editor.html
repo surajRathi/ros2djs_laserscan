@@ -10,10 +10,17 @@
 <body>
 <div id="main_div">
     <p>Mode: <strong><span id="mode_line">undefined</span></strong></p>
+    <p>Layer: <strong><span id="layer_line">undefined</span></strong></p>
     <button type="button" id="delete_el_button">Delete Element</button>
     <button type="button" id="multi_selector_button">Select Multiple Elements</button>
     <button type="button" id="add_line_button">Add Line</button>
     <button type="button" id="add_rect_button">Add Rect</button>
+    <label for="layer_selector">Layer:</label>
+    <select name="Layer" id="layer_selector">
+        <option value="obstacle">Obstacles</option>
+        <option value="preffered">Preferred Zone</option>
+        <option value="blinknbeep">Blink and Beep Zone</option>
+    </select>
     <br/>
 
     <!--BG Image generated with ```convert costmap.pgm image.png```-->

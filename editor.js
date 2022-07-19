@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let mouse_down = false, selectedElement = null, mouse_offset = null, line_dragger = null;
 
         const mode_line_el = document.getElementById('mode_line')
+        const layer_line_el = document.getElementById('layer_line')
         let mode = {
             NONE: 0,
             SELECTED: 1,
@@ -26,9 +27,19 @@ document.addEventListener('DOMContentLoaded', () => {
             get m() {
                 return this.m_;
             },
-
         }
         mode.m = mode.NONE;
+
+        let layer = {
+            OBSTACLE: 'obstacle', PREFFERED: 'preffered', BLINKNBEEP: 'blinknbeep', l_: this.NONE, set l(val) {
+                this.l_ = val;
+                layer_line_el.innerText = Object.keys(this).find(e => this[e] === this.l_).toString()
+                console.log('Layer: ', this.l_, Object.keys(this).find(e => e !== 'l_' && e !== 'l' && this[e] === this.l_).toString())
+            }, get l() {
+                return this.l_;
+            },
+        }
+        layer.l = layer.OBSTACLE;
 
         document.getElementById('delete_el_button').onclick = () => {
             if (!mouse_down) mode.m = mode.DELETE;
@@ -42,6 +53,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('add_rect_button').onclick = () => {
             if (!mouse_down) mode.m = mode.ADD_RECT;
         }
+        document.getElementById('layer_selector').addEventListener('change', function () {
+            layer.l = this.value
+        })
 
         function getMousePosition(evt) {
             const CTM = svg.getScreenCTM();
