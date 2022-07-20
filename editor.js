@@ -139,10 +139,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 rect.setAttribute("y", p1.y.toString());
                 rect.setAttribute("width", p2.x.toString());
                 rect.setAttribute("height", p2.y.toString());
-                rect.setAttribute("fill", "#5cceee");
-                rect.setAttribute("fill-opacity", "0.1");
-                rect.setAttribute("stroke", "green");
-                rect.setAttribute("stroke-width", "1");
                 rect.classList.add("selector");
 
                 svg.appendChild(rect);
@@ -193,10 +189,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.el_ = val;
 
                 const rect = svg_doc.createElementNS(svg.namespaceURI, "rect");
-                rect.setAttribute("fill", "#5cceee");
-                rect.setAttribute("fill-opacity", "0.1");
-                rect.setAttribute("stroke", "green");
-                rect.setAttribute("stroke-width", "1");
                 rect.classList.add("selector");
                 svg.appendChild(rect);
                 this.bounding_box_ = rect;
@@ -342,11 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 rect.setAttribute("y", mouse_pos.y.toString());
                 rect.setAttribute("width", '1');
                 rect.setAttribute("height", '1');
-                rect.setAttribute("fill", "#5cceee");
-                rect.setAttribute("fill-opacity", "0.1");
-                rect.setAttribute("stroke", "green");
-                rect.setAttribute("stroke-width", "1");
-                rect.classList.add("selector_bb");
+                rect.classList.add("selector");
 
                 svg.appendChild(rect);
                 this.rect_ = rect;
@@ -389,7 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const p1 = {x: Math.min(mouse_pos.x, this.mouse_start.x), y: Math.min(mouse_pos.y, this.mouse_start.y)}
                 const p2 = {x: Math.max(mouse_pos.x, this.mouse_start.x), y: Math.max(mouse_pos.y, this.mouse_start.y)}
 
-                for (const el of svg_doc.getElementsByClassName('item')) {
+                for (const el of svg_doc.getElementsByClassName('obstacle')) {
                     if (el.tagName === 'line') {
                         const x1 = el.getAttribute('x1')
                         const x2 = el.getAttribute('x2')
@@ -471,9 +459,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 line.setAttribute("y1", Y1.toString());
                 line.setAttribute("x2", X2.toString());
                 line.setAttribute("y2", Y2.toString());
-                line.setAttribute("stroke", "#F00");
-                line.setAttribute("stroke-width", "3");
                 line.classList.add("item");
+                line.classList.add("obstacle");
 
                 svg.appendChild(line);
                 this.delete_els()
@@ -495,16 +482,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 line.setAttribute("y1", mouse_pos.y.toString());
                 line.setAttribute("x2", mouse_pos.x.toString());
                 line.setAttribute("y2", mouse_pos.y.toString());
-                line.setAttribute("stroke", "#F00");
-                line.setAttribute("stroke-width", "3");
                 line.classList.add("item");
-                if (layer.l === layer.PREFERRED) {
-                    line.setAttribute('stroke', "#B0F3C8")
-                    line.classList.add("preferred");
-                } else if (layer.l === layer.BLINKNBEEP) {
-                    line.setAttribute('stroke', "#e0cb52")
-                    line.classList.add("blinknbeep");
-                }
+                if (layer.l === layer.OBSTACLE) line.classList.add("obstacle");
+                if (layer.l === layer.PREFERRED) line.classList.add("preferred");
+                if (layer.l === layer.BLINKNBEEP) line.classList.add("blinknbeep");
+
 
                 svg.appendChild(line);
                 this.line_ = line;
@@ -532,18 +514,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 rect.setAttribute("y", mouse_pos.y.toString());
                 rect.setAttribute("width", '1');
                 rect.setAttribute("height", '1');
-                rect.setAttribute("fill", "#F00");
-                rect.setAttribute("fill-opacity", "1.0");
                 rect.classList.add("item");
-                if (layer.l === layer.PREFERRED) {
-                    rect.setAttribute('fill', "#5bbb9f")
-                    rect.setAttribute('fill-opacity', "0.4")
-                    rect.classList.add("preferred");
-                } else if (layer.l === layer.BLINKNBEEP) {
-                    rect.setAttribute('fill', "#e0cb52")
-                    rect.setAttribute('fill-opacity', "0.4")
-                    rect.classList.add("blinknbeep");
-                }
+                if (layer.l === layer.OBSTACLE) rect.classList.add("obstacle");
+                if (layer.l === layer.PREFERRED) rect.classList.add("preferred");
+                if (layer.l === layer.BLINKNBEEP) rect.classList.add("blinknbeep");
 
 
                 svg.appendChild(rect);
