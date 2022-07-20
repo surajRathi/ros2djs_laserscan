@@ -3,6 +3,15 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         const svg_doc = svg_el.getSVGDocument();
         const svg = svg_doc.getElementsByTagName('svg')[0];
+        {
+            const link = document.createElement("link");
+
+            link.type = "text/css";
+            link.rel = "stylesheet";
+            link.href = '/css/svg_edit.css';
+
+            svg.appendChild(link);
+        }
 
         let mouse_down = false, selectedElement = null, mouse_offset = null, line_dragger = null;
 
@@ -155,9 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 circle.setAttribute("cx", pc.x.toString());
                 circle.setAttribute("cy", pc.y.toString());
                 circle.setAttribute("r", "2");
-                circle.setAttribute("fill", "#000");
-                circle.setAttribute("fill-opacity", "0.8");
-                circle.classList.add("selector_closer");
+                circle.classList.add("selector_deleter");
 
                 svg.appendChild(circle);
                 this.circle_ = circle;
@@ -195,9 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const circle = svg_doc.createElementNS(svg.namespaceURI, "circle");
                 circle.setAttribute("r", "2");
-                circle.setAttribute("fill", "#000");
-                circle.setAttribute("fill-opacity", "0.8");
-                circle.classList.add("selector_closer");
+                circle.classList.add("selector_deleter");
                 svg.appendChild(circle);
                 this.circle_ = circle;
 
@@ -343,9 +348,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 circle.setAttribute("cx", mouse_pos.x.toString());
                 circle.setAttribute("cy", mouse_pos.y.toString());
                 circle.setAttribute("r", "2");
-                circle.setAttribute("fill", "#000");
-                circle.setAttribute("fill-opacity", "0.8");
-                circle.classList.add("selector_closer");
+                circle.classList.add("selector_deleter");
 
                 svg.appendChild(circle);
                 this.circle_ = circle;
@@ -354,8 +357,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 circle2.setAttribute("cx", mouse_pos.x.toString());
                 circle2.setAttribute("cy", mouse_pos.y.toString());
                 circle2.setAttribute("r", "2");
-                circle2.setAttribute("fill", "#00F");
-                circle2.setAttribute("fill-opacity", "0.8");
                 circle2.classList.add("selector_joiner");
 
                 svg.appendChild(circle2);

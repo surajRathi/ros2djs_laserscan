@@ -1,12 +1,4 @@
 <svg xmlns='http://www.w3.org/2000/svg' width='384' height='384' viewBox='0 0 384 384'>
-<style><![CDATA[
-.bg {fill: #044B94; fill-opacity: 0.2;}
-.obstacle { stroke: #F00; fill: #F00; }
-line.obstacle {stroke-width: 4; stroke-linecap: round;}
-.preferred {fill: #5bbb9f; fill-opacity: 0.4; stroke: #5bbb9f; stroke-opacity: 0.4;}
-.blinknbeep {fill: #e0cb52; fill-opacity: 0.4; stroke: #e0cb52; stroke-opacity: 0.4;}
-.selector {stroke: green; fill: #5cceee; fill-opacity: 0.25; stroke-width: 1;} 
-]]></style>
 <rect x='0' y='0' class='bg' width='384' height='384' />
 <line x1='168' y1='198' x2='206' y2='196' class='item obstacle' />
 <line x1='197' y1='217' x2='223' y2='217' class='item obstacle' />

@@ -1,0 +1,47 @@
+.bg {
+    fill: #044B94;
+    fill-opacity: 0.2;
+}
+
+
+.obstacle {
+    stroke: #F00;
+    fill: #F00;
+}
+
+line.obstacle {
+    stroke-width: 4;
+    stroke-linecap: round;
+}
+
+.preferred {
+    fill: #5bbb9f;
+    fill-opacity: 0.4;
+    stroke: #5bbb9f;
+    stroke-opacity: 0.4;
+}
+
+.blinknbeep {
+    fill: #e0cb52;
+    fill-opacity: 0.4;
+    stroke: #e0cb52;
+    stroke-opacity: 0.4;
+}
+
+
+.selector {
+    stroke: green;
+    fill: #5cceee;
+    fill-opacity: 0.25;
+    stroke-width: 1;
+}
+
+.selector_deleter {
+    fill: #000;
+    fill-opacity: 0.8;
+}
+
+.selector_joiner {
+    fill: #00F;
+    fill-opacity: 0.8;
+}
