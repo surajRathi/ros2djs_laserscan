@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <title>SVG Editor</title>
     <link rel="stylesheet" href="index.css">
+
+    <script type="text/javascript" src="https://static.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
     <script src="editor.js"></script>
     <style>
         body {
@@ -24,6 +26,7 @@
         }
 
     </style>
+    <link type="text/css" rel="stylesheet" href="css/svg_edit.css">
 
 </head>
 <body>
@@ -37,6 +40,7 @@
         <div style="display:inline;width:fit-content">Layer: <strong><span
                 id="layer_line">undefined</span></strong></div>
     </div>
+    <button type="button" id="start_editing">Start Editing</button>
     <button type="button" id="delete_el_button">Delete Element</button>
     <button type="button" id="multi_selector_button">Select Multiple Elements</button>
     <button type="button" id="add_line_button">Add Line</button>
@@ -49,12 +53,7 @@
     </select>
     <br/>
 
-    <!--BG Image generated with ```convert costmap.pgm image.png```-->
-    <div id='svg_container'
-         style="height: fit-content;width: fit-content;background-image:url('data/tb3.png');background-size: contain;transform: scaleY(-1);">
-        <!--TODO: Instead of this double scaleY, use a pseudo element inside the div-->
-        <object id="map_svg" data="data/test.svg" type="image/svg+xml" width="800"
-                style="transform: scaleY(-1);background:rgba(0,0,0,0.2)"></object>
+    <div id='svg_container' style="height: fit-content;width: fit-content;background-size: contain;">
     </div>
 </div>
 </body>

@@ -1,3 +1,32 @@
+const ros = new ROSLIB.Ros({
+    // url: 'ws://192.168.0.12:9090'
+    url: 'ws://localhost:9090'
+});
+
+ros.on('connection', () => console.log('Connected to websocket server.'));
+ros.on('error', error => console.log('Error connecting to websocket server: ', error));
+ros.on('close', () => console.log('Connection to websocket server closed.'));
+const start_editing_client = new ROSLIB.Service({
+    ros: ros, name: '/map_server/start_editing', serviceType: 'map_to_svg/StartEditing'
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('start_editing').onclick = () => {
+        start_editing_client.callService(new ROSLIB.ServiceRequest({}), (result) => {
+            console.log('Result for service call on ' + start_editing_client.name + ': ' + result.success);
+            const img = new Image()
+            img.src = "data:image/png;base64," + result.raw_png
+            // document.getElementById("svg_container").css("background-image", "url('" + img.src + "')");
+            document.getElementById("svg_container").innerHTML = result.svg_data
+            console.log(result.svg_data)
+            document.getElementById("svg_container").style.backgroundImage = "url('" + img.src + "')";
+        });
+
+    }
+
+
+}, false);
+/*
 document.addEventListener('DOMContentLoaded', () => {
     const svg_el = document.getElementById('map_svg');
     setTimeout(() => {
@@ -701,4 +730,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     }, 200) // onLoad doesn't work for the object tag
 
-}, false);
+}, false);*/
