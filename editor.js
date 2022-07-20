@@ -16,16 +16,19 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Result for service call on ' + start_editing_client.name + ': ' + result.success);
             const img = new Image()
             img.src = "data:image/png;base64," + result.raw_png
-            // document.getElementById("svg_container").css("background-image", "url('" + img.src + "')");
-            document.getElementById("svg_container").innerHTML = result.svg_data
-            console.log(result.svg_data)
-            document.getElementById("svg_container").style.backgroundImage = "url('" + img.src + "')";
+
+            const svg_container = document.getElementById("svg_container");
+            svg_container.innerHTML = result.svg_data;
+            svg_container.style.backgroundImage = "url('" + img.src + "')";
+            const svg_el = svg_container.children[0];
+            svg_el.removeAttribute('height')
+            svg_el.setAttribute('width', '100%')
+            console.log(svg_el)
         });
 
     }
-
-
 }, false);
+
 /*
 document.addEventListener('DOMContentLoaded', () => {
     const svg_el = document.getElementById('map_svg');
