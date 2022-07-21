@@ -24,6 +24,48 @@ const finish_editing_client = new ROSLIB.Service({
 });
 
 
+function copyStylesInline(destinationNode, sourceNode) {
+    const containerElements = ["svg", "g"];
+    for (let cd = 0; cd < destinationNode.children.length; cd++) {
+        const child = destinationNode.children[cd];
+        if (containerElements.indexOf(child.tagName) !== -1) {
+            copyStylesInline(child, sourceNode.children[cd]);
+            continue;
+        }
+        const style = sourceNode.children[cd].currentStyle || window.getComputedStyle(sourceNode.children[cd]);
+        if (style === "undefined" || style == null) continue;
+        for (let st = 0; st < style.length; st++) {
+            child.style.setProperty(style[st], style.getPropertyValue(style[st]));
+        }
+    }
+}
+
+function svgtoURI(svg, callback = null) {
+    const copy = svg.cloneNode(true);
+    copyStylesInline(copy, svg);
+
+    const canvas = document.createElement("canvas");
+    const bbox = svg.getBBox();
+    canvas.width = bbox.width;
+    canvas.height = bbox.height;
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, bbox.width, bbox.height);
+    const data = (new XMLSerializer()).serializeToString(copy);
+    const DOMURL = window.URL || window.webkitURL || window;
+    const img = new Image();
+    const svgBlob = new Blob([data], {type: "image/svg+xml;charset=utf-8"});
+    const url = DOMURL.createObjectURL(svgBlob);
+    img.onload = function () {
+        ctx.drawImage(img, 0, 0);
+        DOMURL.revokeObjectURL(url);
+        const imgURI = canvas.toDataURL("image/png");
+        document.removeChild(canvas);
+        if (callback !== null) callback(imgURI)
+    }
+    img.src = url;
+}
+
+
 document.addEventListener('DOMContentLoaded', () => {
     const svg_container = document.getElementById("svg_container");
     const refresh_maps_el = document.getElementById('refresh_maps')
@@ -829,15 +871,20 @@ document.addEventListener('DOMContentLoaded', () => {
         save_editing_button.disabled = true
 
         const svg_data = svg_container.innerHTML;
-        svg_container.innerHTML = '';
-        svg_container.style.backgroundImage = null;
+        const svg = svg_container.getElementsByTagName('svg')[0];
+        svgtoURI(svg, (URI) => {
+            console.log(URI)
+            svg_container.innerHTML = '';
+            svg_container.style.backgroundImage = null;
 
-        finish_editing_client.callService(new ROSLIB.ServiceRequest({svg_data: svg_data}), (result) => {
-            refresh_maps_el.onclick(null)
-        }, (reason) => {
-            alert("Cancel edit maps Callback failed.")
-            console.log(reason)
+            finish_editing_client.callService(new ROSLIB.ServiceRequest({svg_data: svg_data}), (result) => {
+                refresh_maps_el.onclick(null)
+            }, (reason) => {
+                alert("Cancel edit maps Callback failed.")
+                console.log(reason)
+            })
         })
+
 
     }
 }, false);
