@@ -25,6 +25,7 @@ const finish_editing_client = new ROSLIB.Service({
 
 
 document.addEventListener('DOMContentLoaded', () => {
+    const svg_container = document.getElementById("svg_container");
     document.getElementById('refresh_maps').onclick = () => {
         const select = document.getElementById('map_selector')
         select.disabled = true
@@ -51,13 +52,22 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log(reason)
         })
     }
+    document.getElementById('map_selector').onchange = () => {
+        set_map_client.callService(new ROSLIB.ServiceRequest({map: document.getElementById('map_selector').value}), (result) => {
+            if (result.set_map === '') {
+                console.log('Failed to set map')
+            }
+            document.getElementById('refresh_maps').onclick()
+            svg_container.innerHTML = '';
+            svg_container.style.backgroundImage = null;
+        })
+    }
     document.getElementById('start_editing').onclick = () => {
         start_editing_client.callService(new ROSLIB.ServiceRequest({}), (result) => {
             console.log('Result for service call on ' + start_editing_client.name + ': ' + result.success);
             const img = new Image()
             img.src = "data:image/png;base64," + result.raw_png
 
-            const svg_container = document.getElementById("svg_container");
             svg_container.innerHTML = result.svg_data;
             svg_container.style.backgroundImage = "url('" + img.src + "')";
             const svg = svg_container.getElementsByTagName('svg')[0];
