@@ -40,12 +40,8 @@ function copyStylesInline(destinationNode, sourceNode) {
     }
 }
 
-function svgtoURI(svg, callback = null) {
-    const copy = svg.cloneNode(true);
-    copyStylesInline(copy, svg);
-
+function svgCopyToURI(copy, bbox, callback = null) {
     const canvas = document.createElement("canvas");
-    const bbox = svg.getBBox();
     canvas.width = bbox.width;
     canvas.height = bbox.height;
     const ctx = canvas.getContext("2d");
@@ -59,12 +55,20 @@ function svgtoURI(svg, callback = null) {
         ctx.drawImage(img, 0, 0);
         DOMURL.revokeObjectURL(url);
         const imgURI = canvas.toDataURL("image/png");
-        document.removeChild(canvas);
+        canvas.remove()
         if (callback !== null) callback(imgURI)
     }
     img.src = url;
 }
 
+function renderLayerURI(svg, class_id, callback) {
+    const copy = svg.cloneNode(true);
+    copyStylesInline(copy, svg);
+    for (const el of copy.children) {
+        if (!el.classList.contains(class_id)) el.remove()
+    }
+    svgCopyToURI(copy, svg.getBBox(), callback)
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     const svg_container = document.getElementById("svg_container");
@@ -872,7 +876,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const svg_data = svg_container.innerHTML;
         const svg = svg_container.getElementsByTagName('svg')[0];
-        svgtoURI(svg, (URI) => {
+        renderLayerURI(svg, 'obstacle', (URI) => {
             console.log(URI)
             svg_container.innerHTML = '';
             svg_container.style.backgroundImage = null;
