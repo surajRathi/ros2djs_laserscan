@@ -6,11 +6,51 @@ const ros = new ROSLIB.Ros({
 ros.on('connection', () => console.log('Connected to websocket server.'));
 ros.on('error', error => console.log('Error connecting to websocket server: ', error));
 ros.on('close', () => console.log('Connection to websocket server closed.'));
+
+const list_maps_client = new ROSLIB.Service({
+    ros: ros, name: '/map_server/list_maps', serviceType: 'map_to_svg/ListMaps'
+});
+
+const set_map_client = new ROSLIB.Service({
+    ros: ros, name: '/map_server/set_map', serviceType: 'map_to_svg/SetMap'
+});
+
 const start_editing_client = new ROSLIB.Service({
     ros: ros, name: '/map_server/start_editing', serviceType: 'map_to_svg/StartEditing'
 });
 
+const finish_editing_client = new ROSLIB.Service({
+    ros: ros, name: '/map_server/finish_editing', serviceType: 'map_to_svg/FinishEditing'
+});
+
+
 document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('refresh_maps').onclick = () => {
+        const select = document.getElementById('map_selector')
+        select.disabled = true
+        list_maps_client.callService(new ROSLIB.ServiceRequest({}), (result) => {
+            const maps = result.maps;
+            let current = result.current;
+
+            let options = ''
+            for (const map of maps) {
+                options += `<option value="${map}">${map}</option>\n`
+                if (map === current) select.value = map;
+            }
+
+            if (current === '') {
+                options = '<option value="null">None</option>\n' + options
+                current = "null"
+            }
+            select.innerHTML = options;
+            select.value = current;
+            select.disabled = false;
+
+        }, (reason) => {
+            alert("Refresh maps Callback failed.")
+            console.log(reason)
+        })
+    }
     document.getElementById('start_editing').onclick = () => {
         start_editing_client.callService(new ROSLIB.ServiceRequest({}), (result) => {
             console.log('Result for service call on ' + start_editing_client.name + ': ' + result.success);
@@ -392,12 +432,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     }, end_create(mouse_pos) {
                         this.drag_create((mouse_pos))
                         const p1 = {
-                            x: Math.min(mouse_pos.x, this.mouse_start.x),
-                            y: Math.min(mouse_pos.y, this.mouse_start.y)
+                            x: Math.min(mouse_pos.x, this.mouse_start.x), y: Math.min(mouse_pos.y, this.mouse_start.y)
                         }
                         const p2 = {
-                            x: Math.max(mouse_pos.x, this.mouse_start.x),
-                            y: Math.max(mouse_pos.y, this.mouse_start.y)
+                            x: Math.max(mouse_pos.x, this.mouse_start.x), y: Math.max(mouse_pos.y, this.mouse_start.y)
                         }
 
                         for (const el of svg_doc.getElementsByClassName('obstacle')) {
@@ -723,7 +761,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             }, 200) // onLoad doesn't work for the object tag
 
-        });
+        }, () => alert("Callback failed."));
 
     }
 }, false);

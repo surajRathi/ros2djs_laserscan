@@ -33,9 +33,10 @@
 <div id="main_div">
     <h1 style="margin-top: 1px; padding-top: 1px">Map Editor</h1>
     <label for="map_selector">Map:</label>
-    <select name="Map Selector" id="map_selector">
-        <option value="null">null</option>
+    <select id="map_selector" name="Map Selector" disabled>
+        <option value="null">None</option>
     </select>
+    <button type="button" id="refresh_maps">⟳</button>
     <button type="button" id="start_editing">Start Editing</button>
     <button type="button" id="save_edits">Save Edits</button>
     <button type="button" id="cancel_edits">Cancel Edits</button>
