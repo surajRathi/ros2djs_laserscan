@@ -76,6 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
         })
     }
 
+    let clean_up_editing = null
     start_editing_button.onclick = () => {
         start_editing_client.callService(new ROSLIB.ServiceRequest({}), (result) => {
             console.log('Result for service call on ' + start_editing_client.name + ': ' + result.success);
@@ -621,6 +622,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
+                clean_up_editing = () => {
+                    select_mode.clear()
+                    line_select_mode.clear()
+                    multi_line_selector_mode.clear()
+                    add_line_mode.clear()
+                    add_rect_mode.clear()
+                }
+
                 function startDrag(evt) {
                     mouse_down = true;
 
@@ -789,6 +798,46 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 200) // onLoad doesn't work for the object tag
 
         }, () => alert("Callback failed."));
+
+    }
+
+    cancel_editing_button.onclick = () => {
+        if (clean_up_editing !== null) clean_up_editing()
+        clean_up_editing = null
+
+        start_editing_button.disabled = true
+        cancel_editing_button.disabled = true
+        save_editing_button.disabled = true
+
+        svg_container.innerHTML = '';
+        svg_container.style.backgroundImage = null;
+
+        finish_editing_client.callService(new ROSLIB.ServiceRequest({svg_data: ''}), (result) => {
+            refresh_maps_el.onclick()
+        }, (reason) => {
+            alert("Save edit maps Callback failed.")
+            console.log(reason)
+        })
+    }
+
+    save_editing_button.onclick = () => {
+        if (clean_up_editing !== null) clean_up_editing()
+        clean_up_editing = null
+
+        start_editing_button.disabled = true
+        cancel_editing_button.disabled = true
+        save_editing_button.disabled = true
+
+        const svg_data = svg_container.innerHTML;
+        svg_container.innerHTML = '';
+        svg_container.style.backgroundImage = null;
+
+        finish_editing_client.callService(new ROSLIB.ServiceRequest({svg_data: svg_data}), (result) => {
+            refresh_maps_el.onclick()
+        }, (reason) => {
+            alert("Cancel edit maps Callback failed.")
+            console.log(reason)
+        })
 
     }
 }, false);
