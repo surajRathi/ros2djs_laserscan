@@ -813,7 +813,7 @@ document.addEventListener('DOMContentLoaded', () => {
         svg_container.style.backgroundImage = null;
 
         finish_editing_client.callService(new ROSLIB.ServiceRequest({svg_data: ''}), (result) => {
-            refresh_maps_el.onclick()
+            refresh_maps_el.onclick(null)
         }, (reason) => {
             alert("Save edit maps Callback failed.")
             console.log(reason)
@@ -833,7 +833,7 @@ document.addEventListener('DOMContentLoaded', () => {
         svg_container.style.backgroundImage = null;
 
         finish_editing_client.callService(new ROSLIB.ServiceRequest({svg_data: svg_data}), (result) => {
-            refresh_maps_el.onclick()
+            refresh_maps_el.onclick(null)
         }, (reason) => {
             alert("Cancel edit maps Callback failed.")
             console.log(reason)
