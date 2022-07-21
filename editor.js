@@ -40,12 +40,12 @@ function copyStylesInline(destinationNode, sourceNode) {
     }
 }
 
-function svgCopyToURI(copy, bbox, callback = null) {
+function svgCopyToURI(copy, dims, callback = null) {
     const canvas = document.createElement("canvas");
-    canvas.width = bbox.width;
-    canvas.height = bbox.height;
+    canvas.width = dims.width;
+    canvas.height = dims.height;
     const ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, bbox.width, bbox.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     const data = (new XMLSerializer()).serializeToString(copy);
     const DOMURL = window.URL || window.webkitURL || window;
     const img = new Image();
@@ -67,7 +67,12 @@ function renderLayerURI(svg, class_id, callback) {
     for (const el of copy.children) {
         if (!el.classList.contains(class_id)) el.remove()
     }
-    svgCopyToURI(copy, svg.getBBox(), callback)
+    // TODO: Reset view box if you are zooming.
+    const vb = svg.getAttribute('viewBox').split(' ')
+    svgCopyToURI(copy, {
+        width: Number.parseInt(vb[2]) - Number.parseInt(vb[0]),
+        height: Number.parseInt(vb[3]) - Number.parseInt(vb[1])
+    }, callback)
 }
 
 document.addEventListener('DOMContentLoaded', () => {
