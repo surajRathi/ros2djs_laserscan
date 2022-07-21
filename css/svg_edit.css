@@ -14,10 +14,17 @@ line.obstacle {
     stroke-linecap: round;
 }
 
+.cleanup {
+    fill: #ffffff;
+    fill-opacity: 0.8;
+    stroke: #ffffff;
+    stroke-opacity: 0.8;
+}
+
 .preferred {
-    fill: #5bbb9f;
+    fill: #35fc8e;
     fill-opacity: 0.4;
-    stroke: #5bbb9f;
+    stroke: #35fc8e;
     stroke-opacity: 0.4;
 }
 

@@ -70,8 +70,7 @@ function renderLayerURI(svg, class_id, callback) {
     // TODO: Reset view box if you are zooming.
     const vb = svg.getAttribute('viewBox').split(' ')
     svgCopyToURI(copy, {
-        width: Number.parseInt(vb[2]) - Number.parseInt(vb[0]),
-        height: Number.parseInt(vb[3]) - Number.parseInt(vb[1])
+        width: Number.parseInt(vb[2]) - Number.parseInt(vb[0]), height: Number.parseInt(vb[3]) - Number.parseInt(vb[1])
     }, callback)
 }
 
@@ -173,15 +172,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 mode.m = mode.NONE;
 
                 let layer = {
-                    OBSTACLE: 'obstacle', PREFERRED: 'preferred', BLINKNBEEP: 'blinknbeep', l_: this.NONE, set l(val) {
+                    CLEANUP: 'cleanup',
+                    OBSTACLE: 'obstacle',
+                    PREFERRED: 'preferred',
+                    BLINKNBEEP: 'blinknbeep',
+                    l_: this.NONE,
+                    set l(val) {
                         this.l_ = val;
                         layer_line_el.innerText = Object.keys(this).find(e => this[e] === this.l_).toString()
                         console.log('Layer: ', this.l_, Object.keys(this).find(e => e !== 'l_' && e !== 'l' && this[e] === this.l_).toString())
-                    }, get l() {
+                    },
+                    get l() {
                         return this.l_;
                     },
                 }
-                layer.l = layer.OBSTACLE;
+                layer.l = layer.CLEANUP;
 
                 document.getElementById('delete_el_button').onclick = () => {
                     if (!mouse_down) mode.m = mode.DELETE;
@@ -623,10 +628,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         line.setAttribute("x2", mouse_pos.x.toString());
                         line.setAttribute("y2", mouse_pos.y.toString());
                         line.classList.add("item");
-                        if (layer.l === layer.OBSTACLE) line.classList.add("obstacle");
-                        if (layer.l === layer.PREFERRED) line.classList.add("preferred");
-                        if (layer.l === layer.BLINKNBEEP) line.classList.add("blinknbeep");
-
+                        line.classList.add(layer.l);
 
                         svg.appendChild(line);
                         this.line_ = line;
@@ -655,10 +657,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         rect.setAttribute("width", '1');
                         rect.setAttribute("height", '1');
                         rect.classList.add("item");
-                        if (layer.l === layer.OBSTACLE) rect.classList.add("obstacle");
-                        if (layer.l === layer.PREFERRED) rect.classList.add("preferred");
-                        if (layer.l === layer.BLINKNBEEP) rect.classList.add("blinknbeep");
-
+                        rect.classList.add(layer.l);
 
                         svg.appendChild(rect);
                         this.rect_ = rect;
