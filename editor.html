@@ -32,7 +32,15 @@
 <body>
 <div id="main_div">
     <h1 style="margin-top: 1px; padding-top: 1px">Map Editor</h1>
-    <div style="width: 100%;margin-bottom: 5px;">
+    <label for="map_selector">Map:</label>
+    <select name="Map Selector" id="map_selector">
+        <option value="null">null</option>
+    </select>
+    <button type="button" id="start_editing">Start Editing</button>
+    <button type="button" id="save_edits">Save Edits</button>
+    <button type="button" id="cancel_edits">Cancel Edits</button>
+
+    <div style="width: 100%;margin-bottom: 5px; margin-top: 5px;">
         <div style="display:inline;width:fit-content">Mode: <strong><span id="mode_line">undefined</span></strong></div>
         <div style="width:available;display: inline; color:#1F2933;">
             .....
@@ -40,7 +48,7 @@
         <div style="display:inline;width:fit-content">Layer: <strong><span
                 id="layer_line">undefined</span></strong></div>
     </div>
-    <button type="button" id="start_editing">Start Editing</button>
+
     <button type="button" id="delete_el_button">Delete Element</button>
     <button type="button" id="multi_selector_button">Select Multiple Elements</button>
     <button type="button" id="add_line_button">Add Line</button>
