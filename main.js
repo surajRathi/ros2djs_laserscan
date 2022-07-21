@@ -1,7 +1,7 @@
 // Connect to ROS
 const ros = new ROSLIB.Ros({
-    url: 'ws://192.168.0.12:9090'
-    // url: 'ws://localhost:9090'
+    // url: 'ws://192.168.0.12:9090'
+    url: 'ws://localhost:9090'
 });
 
 ros.on('connection', () => console.log('Connected to websocket server.'));
@@ -212,7 +212,7 @@ class App {
 
         // Set up the map client.
         this.map_client = new ROS2D.OccupancyGridClient({
-            ros: this.ros, rootObject: this.viewer.scene, continuous: false
+            ros: this.ros, rootObject: this.viewer.scene, continuous: true, topic: '/map',
         });
 
         // Scale the canvas to fit to the map
@@ -470,10 +470,12 @@ MY2D.MapAsSVG = function (options) {
     const app = options.app
     const topic = options.topic || '/move_base/global_costmap/costmap'
     const debug = options.debug || false
+    const is_fullmap = options.is_fullmap || false
     // subscribe to the topic
     const svg_topic = new ROSLIB.Topic({
-        ros: ros, name: topic + '_svg', messageType: 'std_msgs/String'
+        ros: ros, name: options.svg_topic || (topic + '_svg'), messageType: 'std_msgs/String'
     });
+    if (debug) console.log(options.svg_topic || (topic + '_svg'))
     const cmap_topic = new ROSLIB.Topic({
         ros: ros, name: topic, messageType: 'nav_msgs/OccupancyGrid'
     });
@@ -518,6 +520,7 @@ MY2D.MapAsSVG = function (options) {
 
         // We want to only update when we have a fresh svg string
         this.svg_str = null
+        if (is_fullmap) this.msg = null
 
         if (index !== null) app.viewer.scene.addChildAt(this, index); else app.viewer.scene.addChild(this);
 
@@ -546,6 +549,9 @@ const global_path = new PathRenderer({app: app})
 const goal_pose = new GoalPoseRenderer({app: app})
 const pose = new PoseRenderer({app: app})
 const local_costmap_svg_render = new MY2D.MapAsSVG({app: app, topic: '/move_base/local_costmap/costmap'})
+const svg_map_render = new MY2D.MapAsSVG({
+    app: app, topic: '/map', svg_topic: '/svg_map', debug: true, is_fullmap: true
+})
 
 document.addEventListener('DOMContentLoaded', app.init.bind(app), false);
 document.addEventListener('DOMContentLoaded', () => {

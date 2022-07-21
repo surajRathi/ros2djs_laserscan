@@ -140,8 +140,10 @@ document.addEventListener('DOMContentLoaded', () => {
             svg_container.style.backgroundImage = "url('" + img.src + "')";
 
             const svg = svg_container.getElementsByTagName('svg')[0];
-            svg.removeAttribute('height')
-            svg.removeAttribute('width')
+            if (svg.hasAttribute('width'))
+                svg.removeAttribute('width')
+            if (svg.hasAttribute('height'))
+                svg.removeAttribute('height')
 
             setTimeout(() => {
                 const svg_doc = document;
@@ -886,7 +888,10 @@ document.addEventListener('DOMContentLoaded', () => {
             svg_container.innerHTML = '';
             svg_container.style.backgroundImage = null;
 
-            finish_editing_client.callService(new ROSLIB.ServiceRequest({svg_data: svg_data}), (result) => {
+            finish_editing_client.callService(new ROSLIB.ServiceRequest({
+                svg_data: svg_data,
+                png_data: URI
+            }), (result) => {
                 console.log("Editing Success: ", result.success)
                 refresh_maps_el.onclick(null)
             }, (reason) => {
