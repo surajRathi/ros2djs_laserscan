@@ -45,3 +45,8 @@ line.obstacle {
     fill: #00F;
     fill-opacity: 0.8;
 }
+
+.multi_selected {
+    stroke: #000000;
+    fill: #000000;
+}

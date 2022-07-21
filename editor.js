@@ -343,7 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             this.circle2_.remove()
                         }
                         for (const el of this.els_) {
-                            el.setAttribute('stroke', '#F00')
+                            el.classList.remove('multi_selected')
                         }
                         this.els_ = []
                     }, start_create(mouse_pos) {
@@ -408,7 +408,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 const y2 = el.getAttribute('y2')
                                 if ((p1.x <= x1) && (x1 <= p2.x) && (p1.x <= x2) && (x2 <= p2.x) && (p1.y <= y1) && (y1 <= p2.y) && (p1.y <= y2) && (y2 <= p2.y)) {
                                     this.els_.push(el)
-                                    el.setAttribute('stroke', '#000')
+                                    el.classList.add('multi_selected')
                                 }
                             }
                         }
