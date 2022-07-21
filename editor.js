@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const svg = svg_container.getElementsByTagName('svg')[0];
             svg.removeAttribute('height')
-            svg.setAttribute('width', '100%')
+            svg.removeAttribute('width')
 
             setTimeout(() => {
                 const svg_doc = document;
@@ -245,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const circle = svg_doc.createElementNS(svg.namespaceURI, "circle");
                         circle.setAttribute("cx", pc.x.toString());
                         circle.setAttribute("cy", pc.y.toString());
-                        circle.setAttribute("r", "2");
+                        circle.setAttribute("r", "5");
                         circle.classList.add("selector_deleter");
 
                         svg.appendChild(circle);
