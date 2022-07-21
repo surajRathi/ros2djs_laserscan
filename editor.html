@@ -54,12 +54,12 @@
                 id="layer_line">undefined</span></strong></div>
     </div>
 
-    <button type="button" id="delete_el_button">Delete Element</button>
-    <button type="button" id="multi_selector_button">Select Multiple Elements</button>
-    <button type="button" id="add_line_button">Add Line</button>
-    <button type="button" id="add_rect_button">Add Rect</button>
+    <button type="button" id="delete_el_button" class="editing_tools" disabled>Delete Element</button>
+    <button type="button" id="multi_selector_button" class="editing_tools" disabled>Select Multiple Elements</button>
+    <button type="button" id="add_line_button" class="editing_tools" disabled>Add Line</button>
+    <button type="button" id="add_rect_button" class="editing_tools" disabled>Add Rect</button>
     <label for="layer_selector">Layer:</label>
-    <select name="Layer" id="layer_selector">
+    <select name="Layer" id="layer_selector" class="editing_tools" disabled>
         <option value="cleanup">Cleanup</option>
         <option value="obstacle">Obstacles</option>
         <option value="preferred">Preferred Zone</option>

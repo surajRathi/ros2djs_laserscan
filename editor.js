@@ -88,6 +88,9 @@ document.addEventListener('DOMContentLoaded', () => {
         save_editing_button.disabled = true
         svg_container.innerHTML = '';
         svg_container.style.backgroundImage = null;
+        for (const el of document.getElementById('main_div').getElementsByClassName('editing_tools')) {
+            el.disabled = true
+        }
 
         map_selector_el.disabled = true
         list_maps_client.callService(new ROSLIB.ServiceRequest({}), (result) => {
@@ -132,6 +135,9 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Result for service call on ' + start_editing_client.name + ': ' + result.success);
             cancel_editing_button.disabled = false
             save_editing_button.disabled = false
+            for (const el of document.getElementById('main_div').getElementsByClassName('editing_tools')) {
+                el.disabled = false
+            }
 
             const img = new Image()
             img.src = "data:image/png;base64," + result.raw_png
@@ -864,6 +870,10 @@ document.addEventListener('DOMContentLoaded', () => {
         svg_container.innerHTML = '';
         svg_container.style.backgroundImage = null;
 
+        for (const el of document.getElementById('main_div').getElementsByClassName('editing_tools')) {
+            el.disabled = true
+        }
+
         finish_editing_client.callService(new ROSLIB.ServiceRequest({svg_data: ''}), (result) => {
             console.log("Editing Success: ", result.success)
             refresh_maps_el.onclick(null)
@@ -880,6 +890,10 @@ document.addEventListener('DOMContentLoaded', () => {
         start_editing_button.disabled = true
         cancel_editing_button.disabled = true
         save_editing_button.disabled = true
+
+        for (const el of document.getElementById('main_div').getElementsByClassName('editing_tools')) {
+            el.disabled = true
+        }
 
         const svg_data = svg_container.innerHTML;
         const svg = svg_container.getElementsByTagName('svg')[0];
