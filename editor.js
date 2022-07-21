@@ -26,9 +26,20 @@ const finish_editing_client = new ROSLIB.Service({
 
 document.addEventListener('DOMContentLoaded', () => {
     const svg_container = document.getElementById("svg_container");
-    document.getElementById('refresh_maps').onclick = () => {
-        const select = document.getElementById('map_selector')
-        select.disabled = true
+    const refresh_maps_el = document.getElementById('refresh_maps')
+    const map_selector_el = document.getElementById('map_selector');
+    const start_editing_button = document.getElementById('start_editing');
+    const cancel_editing_button = document.getElementById('cancel_edits');
+    const save_editing_button = document.getElementById('save_edits');
+
+    refresh_maps_el.onclick = () => {
+        start_editing_button.disabled = true
+        cancel_editing_button.disabled = true
+        save_editing_button.disabled = true
+        svg_container.innerHTML = '';
+        svg_container.style.backgroundImage = null;
+
+        map_selector_el.disabled = true
         list_maps_client.callService(new ROSLIB.ServiceRequest({}), (result) => {
             const maps = result.maps;
             let current = result.current;
@@ -36,44 +47,50 @@ document.addEventListener('DOMContentLoaded', () => {
             let options = ''
             for (const map of maps) {
                 options += `<option value="${map}">${map}</option>\n`
-                if (map === current) select.value = map;
+                if (map === current) map_selector_el.value = map;
             }
 
             if (current === '') {
                 options = '<option value="null">None</option>\n' + options
                 current = "null"
+                start_editing_button.disabled = true;
+            } else {
+                start_editing_button.disabled = false;
             }
-            select.innerHTML = options;
-            select.value = current;
-            select.disabled = false;
+            map_selector_el.innerHTML = options;
+            map_selector_el.value = current;
+            map_selector_el.disabled = false;
 
         }, (reason) => {
             alert("Refresh maps Callback failed.")
             console.log(reason)
         })
     }
-    document.getElementById('map_selector').onchange = () => {
+
+    map_selector_el.onchange = () => {
         set_map_client.callService(new ROSLIB.ServiceRequest({map: document.getElementById('map_selector').value}), (result) => {
             if (result.set_map === '') {
                 console.log('Failed to set map')
             }
-            document.getElementById('refresh_maps').onclick()
-            svg_container.innerHTML = '';
-            svg_container.style.backgroundImage = null;
+            refresh_maps_el.onclick()
         })
     }
-    document.getElementById('start_editing').onclick = () => {
+
+    start_editing_button.onclick = () => {
         start_editing_client.callService(new ROSLIB.ServiceRequest({}), (result) => {
             console.log('Result for service call on ' + start_editing_client.name + ': ' + result.success);
+            cancel_editing_button.disabled = false
+            save_editing_button.disabled = false
+
             const img = new Image()
             img.src = "data:image/png;base64," + result.raw_png
 
             svg_container.innerHTML = result.svg_data;
             svg_container.style.backgroundImage = "url('" + img.src + "')";
+
             const svg = svg_container.getElementsByTagName('svg')[0];
             svg.removeAttribute('height')
             svg.setAttribute('width', '100%')
-            console.log(svg)
 
             setTimeout(() => {
                 const svg_doc = document;
